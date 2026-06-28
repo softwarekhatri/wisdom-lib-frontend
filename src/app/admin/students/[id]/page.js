@@ -1,0 +1,470 @@
+'use client';
+import { useState, useEffect } from 'react';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
+import Link from 'next/link';
+import {
+  ArrowLeft, User, Phone, Mail, MapPin, Calendar, IndianRupee,
+  CreditCard, Edit, Save, X, Key, Upload, Plus, Check, Clock, Trash2, AlertTriangle
+} from 'lucide-react';
+import toast from 'react-hot-toast';
+import api from '@/lib/api';
+import { formatDate, formatCurrency, getPaymentStatus, MONTH_NAMES, apiBase, getWhatsAppUrl } from '@/lib/utils';
+
+const WhatsAppIcon = ({ size = 16 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
+    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+  </svg>
+);
+import PaymentModal from '@/components/admin/PaymentModal';
+
+export default function StudentDetailPage() {
+  const { id } = useParams();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const isEditMode = searchParams.get('edit') === 'true';
+
+  const [student, setStudent] = useState(null);
+  const [payments, setPayments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState(isEditMode);
+  const [saving, setSaving] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showResetPass, setShowResetPass] = useState(false);
+  const [newPass, setNewPass] = useState('');
+  const [form, setForm] = useState({});
+  const [photoFile, setPhotoFile] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deletingStudent, setDeletingStudent] = useState(false);
+  const [pendingDeletePayment, setPendingDeletePayment] = useState(null);
+  const [deletingPaymentId, setDeletingPaymentId] = useState(null);
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const { data } = await api.get(`/students/${id}`);
+      setStudent(data.student);
+      setPayments(data.payments);
+      setForm({
+        fullName: data.student.fullName,
+        mobile: data.student.mobile || '',
+        whatsappNumber: data.student.whatsappNumber || '',
+        email: data.student.email || '',
+        address: data.student.address || '',
+        admissionDate: data.student.admissionDate?.split('T')[0] || '',
+        libraryFees: data.student.libraryFees || 0,
+        isActive: data.student.isActive,
+      });
+    } catch { toast.error('Failed to load student'); }
+    setLoading(false);
+  };
+
+  useEffect(() => { fetchData(); }, [id]);
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      const fd = new FormData();
+      Object.entries(form).forEach(([k, v]) => fd.append(k, v));
+      if (photoFile) fd.append('photo', photoFile);
+      const { data } = await api.put(`/students/${id}`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+      setStudent(data.student);
+      setEditing(false);
+      toast.success('Student updated!');
+    } catch (err) { toast.error(err?.response?.data?.message || 'Update failed'); }
+    setSaving(false);
+  };
+
+  const handleResetPassword = async () => {
+    if (!newPass.trim()) return;
+    try {
+      await api.patch(`/students/${id}/password`, { password: newPass });
+      toast.success('Password reset successfully!');
+      setShowResetPass(false);
+      setNewPass('');
+    } catch { toast.error('Failed to reset password'); }
+  };
+
+  const handleDeleteStudent = async () => {
+    setDeletingStudent(true);
+    try {
+      await api.delete(`/students/${id}`);
+      toast.success('Student deleted successfully');
+      router.push('/admin/students');
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Failed to delete student');
+      setDeletingStudent(false);
+    }
+  };
+
+  const handleDeletePayment = async (paymentId) => {
+    setDeletingPaymentId(paymentId);
+    try {
+      await api.delete(`/payments/${paymentId}`);
+      setPayments(prev => prev.filter(p => p._id !== paymentId));
+      setPendingDeletePayment(null);
+      toast.success('Payment deleted');
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Failed to delete payment');
+    } finally {
+      setDeletingPaymentId(null);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="max-w-4xl mx-auto">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 w-48 bg-primary-100 rounded" />
+          <div className="h-64 bg-white rounded-2xl border border-primary-100" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!student) return <div className="text-center py-16 text-primary-lighter">Student not found</div>;
+
+  const totalMonthsPaid = payments.reduce((sum, p) => sum + (p.monthsCovered?.length || 0), 0);
+  const payStatus = getPaymentStatus(student.admissionDate, totalMonthsPaid);
+
+  return (
+    <div className="max-w-5xl mx-auto">
+      {/* Header */}
+      <div className="flex items-center gap-3 mb-6">
+        <Link href="/admin/students" className="p-2 rounded-xl hover:bg-primary-100 text-primary transition-colors">
+          <ArrowLeft size={20} />
+        </Link>
+        <div>
+          <h1 className="font-display text-xl sm:text-2xl font-bold text-primary">{student.fullName}</h1>
+          <p className="text-primary-lighter text-sm">Student Profile</p>
+        </div>
+        <div className="ml-auto flex gap-2">
+          {!editing ? (
+            <>
+              <button onClick={() => setShowDeleteConfirm(true)}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl border border-red-200 text-red-600 text-sm hover:bg-red-50 transition-colors">
+                <Trash2 size={15} />
+                Delete
+              </button>
+              <button onClick={() => setEditing(true)} className="flex items-center gap-2 px-4 py-2 rounded-xl border border-primary-200 text-primary text-sm hover:bg-primary-50">
+                <Edit size={16} />
+                Edit
+              </button>
+              <button onClick={() => setShowPaymentModal(true)} className="btn-primary flex items-center gap-2 text-sm px-4 py-2">
+                <Plus size={16} />
+                Add Payment
+              </button>
+            </>
+          ) : (
+            <>
+              <button onClick={() => setEditing(false)} className="flex items-center gap-2 px-4 py-2 rounded-xl border border-primary-200 text-primary text-sm hover:bg-primary-50">
+                <X size={16} />
+                Cancel
+              </button>
+              <button onClick={handleSave} disabled={saving} className="btn-primary flex items-center gap-2 text-sm px-4 py-2">
+                <Save size={16} />
+                {saving ? 'Saving...' : 'Save'}
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+
+      <div className="grid lg:grid-cols-3 gap-6">
+        {/* Left: Profile card */}
+        <div className="lg:col-span-1 space-y-5">
+          <div className="bg-white rounded-2xl border border-primary-100 overflow-hidden">
+            {/* Photo */}
+            <div className="bg-gradient-to-br from-primary to-primary-light h-40 flex items-center justify-center relative">
+              <div className="w-24 h-24 rounded-2xl bg-white/20 border-4 border-white/30 flex items-center justify-center overflow-hidden">
+                {(photoPreview || (student.photo && `${apiBase}${student.photo}`)) ? (
+                  <img src={photoPreview || `${apiBase}${student.photo}`} alt={student.fullName} className="w-full h-full object-cover" />
+                ) : (
+                  <User className="w-10 h-10 text-white/60" />
+                )}
+              </div>
+              {editing && (
+                <label className="absolute bottom-3 right-3 cursor-pointer bg-gold text-primary-dark p-2 rounded-xl shadow-lg hover:bg-gold-light transition-colors">
+                  <Upload size={14} />
+                  <input type="file" accept="image/*" className="hidden" onChange={e => {
+                    const f = e.target.files[0];
+                    if (f) { setPhotoFile(f); setPhotoPreview(URL.createObjectURL(f)); }
+                  }} />
+                </label>
+              )}
+            </div>
+
+            <div className="p-5 space-y-3">
+              <div className={`text-center py-2 px-3 rounded-xl text-sm font-medium ${
+                payStatus.status === 'due' ? 'bg-red-50 text-red-700 border border-red-200' :
+                payStatus.status === 'due-soon' ? 'bg-orange-50 text-orange-700 border border-orange-200' :
+                'bg-green-50 text-green-700 border border-green-200'
+              }`}>
+                {payStatus.label}
+              </div>
+
+              <div className="space-y-2 text-sm">
+                {[
+                  { icon: Calendar, label: 'Joined', value: formatDate(student.admissionDate) },
+                  { icon: IndianRupee, label: 'Fees', value: `${formatCurrency(student.libraryFees)}/mo` },
+                  { icon: Phone, label: 'Mobile', value: student.mobile || '—' },
+                  { icon: Phone, label: 'WhatsApp', value: student.whatsappNumber || student.mobile || '—' },
+                  { icon: Mail, label: 'Email', value: student.email || '—' },
+                ].map(({ icon: Icon, label, value }) => (
+                  <div key={label} className="flex items-center gap-2 text-primary-lighter">
+                    <Icon className="w-4 h-4 flex-shrink-0" />
+                    <span className="text-primary-lighter">{label}:</span>
+                    <span className="text-primary font-medium truncate">{value}</span>
+                  </div>
+                ))}
+                {/* Next Due Date */}
+                {(() => {
+                  const days = student.nextDueDate ? Math.ceil((new Date(student.nextDueDate) - new Date()) / 86400000) : null;
+                  const col = days === null ? 'text-primary' : days < 0 ? 'text-red-600' : days <= 7 ? 'text-orange-500' : 'text-green-600';
+                  return (
+                    <div className="flex items-center gap-2 text-primary-lighter">
+                      <Clock className="w-4 h-4 flex-shrink-0" />
+                      <span className="text-primary-lighter">Next Due:</span>
+                      <span className={`font-semibold truncate ${col}`}>
+                        {student.nextDueDate ? formatDate(student.nextDueDate, 'dd MMM yyyy') : payStatus.dueDateLabel}
+                      </span>
+                    </div>
+                  );
+                })()}
+              </div>
+
+              {/* WhatsApp Reminder button */}
+              {(() => {
+                const waUrl = getWhatsAppUrl(student, student.nextDueDate, student.libraryFees);
+                return waUrl ? (
+                  <a href={waUrl} target="_blank" rel="noopener noreferrer"
+                    className="w-full mt-3 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-green-500 text-white text-sm font-semibold hover:bg-green-600 transition-colors shadow-sm">
+                    <WhatsAppIcon size={15} />
+                    Send Fee Reminder
+                  </a>
+                ) : null;
+              })()}
+
+              <button
+                onClick={() => setShowResetPass(true)}
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-orange-200 text-orange-600 text-sm font-medium hover:bg-orange-50 transition-colors mt-2"
+              >
+                <Key size={14} />
+                Reset Password
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Right: Edit form / Payment history */}
+        <div className="lg:col-span-2 space-y-5">
+          {editing ? (
+            <div className="bg-white rounded-2xl border border-primary-100 p-6">
+              <h2 className="font-semibold text-primary mb-5">Edit Student Details</h2>
+              <form onSubmit={handleSave} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-semibold text-primary mb-1.5">Full Name *</label>
+                  <input required value={form.fullName || ''} onChange={e => setForm(f => ({ ...f, fullName: e.target.value }))} className="input-field" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-primary mb-1.5">Mobile</label>
+                  <input value={form.mobile || ''} onChange={e => setForm(f => ({ ...f, mobile: e.target.value }))} className="input-field" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-primary mb-1.5 flex items-center gap-1.5">
+                    <WhatsAppIcon size={12} /> WhatsApp Number
+                  </label>
+                  <input value={form.whatsappNumber || ''} onChange={e => setForm(f => ({ ...f, whatsappNumber: e.target.value }))} placeholder="If different from mobile" className="input-field" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-primary mb-1.5">Email</label>
+                  <input type="email" value={form.email || ''} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} className="input-field" />
+                </div>
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-semibold text-primary mb-1.5">Address</label>
+                  <textarea rows={2} value={form.address || ''} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} className="input-field resize-none" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-primary mb-1.5">Admission Date</label>
+                  <input type="date" value={form.admissionDate || ''} onChange={e => setForm(f => ({ ...f, admissionDate: e.target.value }))} className="input-field" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-primary mb-1.5">Monthly Fees (₹)</label>
+                  <input type="number" min="0" value={form.libraryFees || 0} onChange={e => setForm(f => ({ ...f, libraryFees: e.target.value }))} className="input-field" />
+                </div>
+                <div className="sm:col-span-2 flex items-center gap-2">
+                  <input type="checkbox" id="isActive" checked={form.isActive} onChange={e => setForm(f => ({ ...f, isActive: e.target.checked }))} className="w-4 h-4 accent-primary" />
+                  <label htmlFor="isActive" className="text-sm text-primary font-medium cursor-pointer">Active Member</label>
+                </div>
+              </form>
+            </div>
+          ) : null}
+
+          {/* Payment History */}
+          <div className="bg-white rounded-2xl border border-primary-100 overflow-hidden">
+            <div className="p-5 border-b border-primary-50 flex items-center justify-between">
+              <h2 className="font-semibold text-primary">Payment History</h2>
+              <span className="text-xs text-primary-lighter">{payments.length} records</span>
+            </div>
+            {payments.length === 0 ? (
+              <div className="p-8 text-center text-primary-lighter text-sm">No payments recorded yet</div>
+            ) : (
+              <div className="table-responsive">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-primary-50">
+                      <th className="text-left px-5 py-3 text-xs font-semibold text-primary-lighter uppercase tracking-wide">Date</th>
+                      <th className="text-left px-5 py-3 text-xs font-semibold text-primary-lighter uppercase tracking-wide">Amount</th>
+                      <th className="text-left px-5 py-3 text-xs font-semibold text-primary-lighter uppercase tracking-wide">Mode</th>
+                      <th className="text-left px-5 py-3 text-xs font-semibold text-primary-lighter uppercase tracking-wide">Covers</th>
+                      <th className="px-5 py-3" />
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-primary-50">
+                    {payments.map((p) => (
+                      pendingDeletePayment === p._id ? (
+                        <tr key={p._id} className="bg-red-50">
+                          <td colSpan={5} className="px-5 py-3.5">
+                            <div className="flex items-center justify-between gap-3">
+                              <span className="text-sm text-red-700 font-medium">
+                                Delete {formatCurrency(p.amount)} payment on {formatDate(p.receivedDate)}?
+                              </span>
+                              <div className="flex gap-2 flex-shrink-0">
+                                <button onClick={() => setPendingDeletePayment(null)}
+                                  className="px-3 py-1.5 rounded-lg border border-primary-200 text-primary text-xs hover:bg-white transition-colors">
+                                  Cancel
+                                </button>
+                                <button
+                                  onClick={() => handleDeletePayment(p._id)}
+                                  disabled={deletingPaymentId === p._id}
+                                  className="px-3 py-1.5 rounded-lg bg-red-600 text-white text-xs font-semibold hover:bg-red-700 disabled:opacity-60 transition-colors flex items-center gap-1.5">
+                                  {deletingPaymentId === p._id
+                                    ? <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin inline-block" />
+                                    : <Trash2 size={12} />}
+                                  Delete
+                                </button>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      ) : (
+                        <tr key={p._id} className="hover:bg-primary-50 transition-colors group">
+                          <td className="px-5 py-3.5 text-sm text-primary">{formatDate(p.receivedDate)}</td>
+                          <td className="px-5 py-3.5 text-sm font-semibold text-primary">{formatCurrency(p.amount)}</td>
+                          <td className="px-5 py-3.5">
+                            <span className={`text-xs px-2 py-1 rounded-full ${p.mode === 'cash' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
+                              {p.mode}{p.referenceNo ? ` · ${p.referenceNo}` : ''}
+                            </span>
+                          </td>
+                          <td className="px-5 py-3.5 text-xs text-primary-lighter">
+                            {p.monthsCovered?.map(mc => `${MONTH_NAMES[mc.month - 1].slice(0, 3)} ${mc.year}`).join(', ') || '—'}
+                          </td>
+                          <td className="px-5 py-3.5 text-right">
+                            <button onClick={() => setPendingDeletePayment(p._id)}
+                              className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 transition-all">
+                              <Trash2 size={14} />
+                            </button>
+                          </td>
+                        </tr>
+                      )
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Payment Modal */}
+      <AnimatePresence>
+        {showPaymentModal && (
+          <PaymentModal
+            student={student}
+            onClose={() => setShowPaymentModal(false)}
+            onSuccess={() => { setShowPaymentModal(false); fetchData(); }}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Delete Student Confirmation Modal */}
+      <AnimatePresence>
+        {showDeleteConfirm && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl"
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-11 h-11 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0">
+                  <AlertTriangle className="w-5 h-5 text-red-600" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-primary text-base">Delete Student?</h3>
+                  <p className="text-xs text-primary-lighter mt-0.5">This cannot be undone</p>
+                </div>
+              </div>
+              <p className="text-sm text-primary-lighter mb-1">
+                You are about to permanently delete <span className="font-semibold text-primary">{student.fullName}</span> and all their data:
+              </p>
+              <ul className="text-sm text-red-600 space-y-1 mb-5 pl-4 list-disc">
+                <li>Student profile &amp; login</li>
+                <li>{payments.length} payment record{payments.length !== 1 ? 's' : ''}</li>
+                {student.photo && <li>Profile photo</li>}
+              </ul>
+              <div className="flex gap-3">
+                <button onClick={() => setShowDeleteConfirm(false)}
+                  className="flex-1 px-4 py-2.5 rounded-xl border border-primary-200 text-primary text-sm font-medium hover:bg-primary-50 transition-colors">
+                  Cancel
+                </button>
+                <button onClick={handleDeleteStudent} disabled={deletingStudent}
+                  className="flex-1 px-4 py-2.5 rounded-xl bg-red-600 text-white text-sm font-bold hover:bg-red-700 disabled:opacity-60 transition-colors flex items-center justify-center gap-2">
+                  {deletingStudent
+                    ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    : <Trash2 size={14} />}
+                  {deletingStudent ? 'Deleting…' : 'Delete Permanently'}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Reset Password Modal */}
+      <AnimatePresence>
+        {showResetPass && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl"
+            >
+              <h3 className="font-semibold text-primary text-lg mb-4">Reset Password</h3>
+              <p className="text-sm text-primary-lighter mb-4">Set a new password for {student.fullName}</p>
+              <input
+                type="text"
+                value={newPass}
+                onChange={e => setNewPass(e.target.value)}
+                placeholder="New password"
+                className="input-field mb-4"
+              />
+              <div className="flex gap-3">
+                <button onClick={() => setShowResetPass(false)} className="flex-1 px-4 py-2.5 rounded-xl border border-primary-200 text-primary text-sm hover:bg-primary-50">
+                  Cancel
+                </button>
+                <button onClick={handleResetPassword} className="flex-1 btn-primary text-sm py-2.5">
+                  Reset Password
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
