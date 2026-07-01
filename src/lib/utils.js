@@ -152,4 +152,4 @@ export const clsx = (...classes) => classes.filter(Boolean).join(" ");
 
 export const apiBase =
   process.env.NEXT_PUBLIC_API_URL?.replace("/api", "") ||
-  "http://localhost:5100";
+  "https://wisdom-library-backend.vercel.app";
