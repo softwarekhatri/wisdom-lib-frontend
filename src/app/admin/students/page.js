@@ -17,8 +17,11 @@ const WhatsAppIcon = ({ size = 14 }) => (
 );
 import AdmissionModal from '@/components/admin/AdmissionModal';
 import PaymentModal from '@/components/admin/PaymentModal';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function StudentsPage() {
+  const { user } = useAuth();
+  const canModify = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
   const [students, setStudents] = useState([]);
   const [pagination, setPagination] = useState(null);
   const [search, setSearch] = useState('');
@@ -157,8 +160,8 @@ export default function StudentsPage() {
                 );
               })()}
 
-              {/* Actions — 4 buttons */}
-              <div className="px-4 py-3 grid grid-cols-4 gap-1.5">
+              {/* Actions */}
+              <div className={`px-4 py-3 grid gap-1.5 ${canModify ? 'grid-cols-4' : 'grid-cols-3'}`}>
                 <button
                   onClick={() => setPayStudent(s)}
                   className="flex items-center justify-center gap-1 py-2.5 rounded-xl bg-gold text-primary-dark text-xs font-bold hover:bg-gold-light active:scale-95 transition-all shadow-sm"
@@ -190,13 +193,15 @@ export default function StudentsPage() {
                   View
                 </Link>
 
-                <Link
-                  href={`/admin/students/${s._id}?edit=true`}
-                  className="flex items-center justify-center gap-1 py-2.5 rounded-xl border border-primary-200 text-primary text-xs font-medium hover:bg-primary-50 active:scale-95 transition-all"
-                >
-                  <Edit className="w-3.5 h-3.5" />
-                  Edit
-                </Link>
+                {canModify && (
+                  <Link
+                    href={`/admin/students/${s._id}?edit=true`}
+                    className="flex items-center justify-center gap-1 py-2.5 rounded-xl border border-primary-200 text-primary text-xs font-medium hover:bg-primary-50 active:scale-95 transition-all"
+                  >
+                    <Edit className="w-3.5 h-3.5" />
+                    Edit
+                  </Link>
+                )}
               </div>
             </motion.div>
           ))}

@@ -17,8 +17,11 @@ const WhatsAppIcon = ({ size = 16 }) => (
   </svg>
 );
 import PaymentModal from '@/components/admin/PaymentModal';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function StudentDetailPage() {
+  const { user } = useAuth();
+  const canModify = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
   const { id } = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -143,15 +146,19 @@ export default function StudentDetailPage() {
         <div className="ml-auto flex gap-2">
           {!editing ? (
             <>
-              <button onClick={() => setShowDeleteConfirm(true)}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl border border-red-200 text-red-600 text-sm hover:bg-red-50 transition-colors">
-                <Trash2 size={15} />
-                Delete
-              </button>
-              <button onClick={() => setEditing(true)} className="flex items-center gap-2 px-4 py-2 rounded-xl border border-primary-200 text-primary text-sm hover:bg-primary-50">
-                <Edit size={16} />
-                Edit
-              </button>
+              {canModify && (
+                <button onClick={() => setShowDeleteConfirm(true)}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl border border-red-200 text-red-600 text-sm hover:bg-red-50 transition-colors">
+                  <Trash2 size={15} />
+                  Delete
+                </button>
+              )}
+              {canModify && (
+                <button onClick={() => setEditing(true)} className="flex items-center gap-2 px-4 py-2 rounded-xl border border-primary-200 text-primary text-sm hover:bg-primary-50">
+                  <Edit size={16} />
+                  Edit
+                </button>
+              )}
               <button onClick={() => setShowPaymentModal(true)} className="btn-primary flex items-center gap-2 text-sm px-4 py-2">
                 <Plus size={16} />
                 Add Payment
@@ -247,6 +254,7 @@ export default function StudentDetailPage() {
                 ) : null;
               })()}
 
+              {canModify && (
               <button
                 onClick={() => setShowResetPass(true)}
                 className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-orange-200 text-orange-600 text-sm font-medium hover:bg-orange-50 transition-colors mt-2"
@@ -254,6 +262,7 @@ export default function StudentDetailPage() {
                 <Key size={14} />
                 Reset Password
               </button>
+              )}
             </div>
           </div>
         </div>
@@ -362,10 +371,12 @@ export default function StudentDetailPage() {
                             {p.monthsCovered?.map(mc => `${MONTH_NAMES[mc.month - 1].slice(0, 3)} ${mc.year}`).join(', ') || '—'}
                           </td>
                           <td className="px-5 py-3.5 text-right">
-                            <button onClick={() => setPendingDeletePayment(p._id)}
-                              className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 transition-all">
-                              <Trash2 size={14} />
-                            </button>
+                            {canModify && (
+                              <button onClick={() => setPendingDeletePayment(p._id)}
+                                className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 transition-all">
+                                <Trash2 size={14} />
+                              </button>
+                            )}
                           </td>
                         </tr>
                       )
