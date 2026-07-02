@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
-import { BookOpen, Menu, X, UserCircle } from 'lucide-react';
+import { Menu, X, UserCircle } from 'lucide-react';
 
 const links = [
   { href: '#about', label: 'About' },
@@ -33,8 +33,8 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-3 group">
-          <div className="w-10 h-10 rounded-xl bg-gold flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-            <BookOpen className="w-5 h-5 text-primary-dark" />
+          <div className="w-10 h-10 rounded-xl bg-gold flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform overflow-hidden">
+            <img src="/logo/wisdom-logo.png" alt="Wisdom Library" className="w-full h-full object-cover" />
           </div>
           <div>
             <div className="text-white font-display font-bold text-lg leading-none">Wisdom</div>
