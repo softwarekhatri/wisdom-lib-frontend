@@ -16,7 +16,11 @@ export default function Footer() {
           <div className="lg:col-span-2">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-xl bg-gold flex items-center justify-center overflow-hidden">
-                <img src="/logo/wisdom-logo.png" alt="Wisdom Library" className="w-full h-full object-cover" />
+                <img
+                  src="/logo/wisdom-logo.png"
+                  alt="Wisdom Library"
+                  className="w-full h-full object-cover"
+                />
               </div>
               <div>
                 <div className="text-white font-display font-bold text-xl leading-none">
@@ -77,20 +81,32 @@ export default function Footer() {
             <ul className="space-y-3">
               <li className="flex items-start gap-2 text-white/60 text-sm">
                 <Phone className="w-4 h-4 mt-0.5 text-gold flex-shrink-0" />
-                <a href="tel:+917209703947" className="hover:text-gold transition-colors">+91 7209703947</a>
+                <a
+                  href="tel:+917209703947"
+                  className="hover:text-gold transition-colors"
+                >
+                  +91 7209703947
+                </a>
               </li>
               <li className="flex items-start gap-2 text-white/60 text-sm">
                 <WhatsAppIcon className="w-4 h-4 mt-0.5 text-gold flex-shrink-0" />
-                <a href="https://wa.me/917209703947" target="_blank" rel="noopener noreferrer" className="hover:text-gold transition-colors">+91 7209703947 (WhatsApp)</a>
+                <a
+                  href="https://wa.me/917209703947"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-gold transition-colors"
+                >
+                  +91 7209703947 (WhatsApp)
+                </a>
               </li>
-              <li className="flex items-start gap-2 text-white/60 text-sm">
+              {/* <li className="flex items-start gap-2 text-white/60 text-sm">
                 <Mail className="w-4 h-4 mt-0.5 text-gold flex-shrink-0" />
                 <span>info@wisdomlibrary.in</span>
               </li>
               <li className="flex items-start gap-2 text-white/60 text-sm">
                 <Mail className="w-4 h-4 mt-0.5 text-gold flex-shrink-0" />
                 <span>feedback@wisdomlibrary.in</span>
-              </li>
+              </li> */}
               <li className="flex items-start gap-2 text-white/60 text-sm">
                 <MapPin className="w-4 h-4 mt-0.5 text-gold flex-shrink-0" />
                 <span>Raja Bagicha, Rafiganj, nearby Lakshwadepp School</span>
@@ -107,7 +123,9 @@ export default function Footer() {
           </p>
           <p className="text-white/30 text-xs">
             Deisgn & Developed by{" "}
-            <a href="https://khatri-software.vercel.app">KHATRI SOFTWARE</a>
+            <a href="https://khatri-software.vercel.app" target="_blank">
+              KHATRI SOFTWARE
+            </a>
           </p>
         </div>
       </div>
