@@ -37,8 +37,8 @@ const CONTACT_INFO = [
   {
     icon: MapPin,
     label: "Location",
-    value: "Raja Bagicha, Rafiganj, nearby Lakshwadepp School",
-    href: "https://maps.google.com/?q=Raja+Bagicha+Rafiganj",
+    value: "Raja Bagicha, Rafiganj, nearby Lakshwadeep School",
+    href: "https://maps.app.goo.gl/W4XV2HV1KUtqabou6",
     color: "bg-primary-100 text-primary",
   },
 ];
@@ -129,9 +129,8 @@ export default function Contact() {
               className="rounded-2xl overflow-hidden border border-primary-100 shadow-sm"
               style={{ height: "220px" }}
             >
-              {/* Replace src with actual Google Maps embed URL */}
               <iframe
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3769.8!2d72.88!3d19.07!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2sWisdom+Library!5e0!3m2!1sen!2sin!4v1&key="
+                src="https://www.google.com/maps?q=Raja+Bagicha,+Rafiganj,+near+Lakshwadeep+School&output=embed"
                 width="100%"
                 height="100%"
                 style={{ border: 0, filter: "sepia(30%) hue-rotate(10deg)" }}

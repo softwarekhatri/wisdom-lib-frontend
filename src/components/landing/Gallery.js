@@ -1,23 +1,65 @@
-'use client';
-import { useState, useRef } from 'react';
-import { motion, AnimatePresence, useInView } from 'framer-motion';
-import { X, ZoomIn } from 'lucide-react';
+"use client";
+import { useState, useRef } from "react";
+import { motion, AnimatePresence, useInView } from "framer-motion";
+import { X, ZoomIn } from "lucide-react";
 
 const GALLERY_ITEMS = [
-  { id: 1, title: 'Reading Hall', subtitle: 'Silence & Focus', span: 'col-span-2 row-span-2', bg: 'from-primary via-primary-light to-primary-dark' },
-  { id: 2, title: 'Book Collection', subtitle: 'Curated Shelves', span: 'col-span-1 row-span-1', bg: 'from-amber-800 to-primary' },
-  { id: 3, title: 'Study Lounge', subtitle: 'Comfort & Style', span: 'col-span-1 row-span-1', bg: 'from-primary-light to-gold-dark' },
-  { id: 4, title: 'Café Corner', subtitle: 'Books & Brews', span: 'col-span-1 row-span-2', bg: 'from-yellow-700 to-amber-900' },
-  { id: 5, title: 'Group Study', subtitle: 'Collaborative Spaces', span: 'col-span-1 row-span-1', bg: 'from-primary-dark to-primary' },
-  { id: 6, title: 'Kids Section', subtitle: 'Little Readers', span: 'col-span-1 row-span-1', bg: 'from-orange-600 to-primary-light' },
-  { id: 7, title: 'Digital Zone', subtitle: 'Tech-Enhanced', span: 'col-span-2 row-span-1', bg: 'from-primary via-primary-lighter to-gold-dark' },
+  {
+    id: 1,
+    title: "Reading Hall",
+    subtitle: "Silence & Focus",
+    span: "col-span-2 row-span-2",
+    bg: "from-primary via-primary-light to-primary-dark",
+  },
+  {
+    id: 2,
+    title: "Book Collection",
+    subtitle: "Curated Shelves",
+    span: "col-span-1 row-span-1",
+    bg: "from-amber-800 to-primary",
+  },
+  {
+    id: 3,
+    title: "Study Lounge",
+    subtitle: "Comfort & Style",
+    span: "col-span-1 row-span-1",
+    bg: "from-primary-light to-gold-dark",
+  },
+  {
+    id: 4,
+    title: "Café Corner",
+    subtitle: "Books & Brews",
+    span: "col-span-1 row-span-2",
+    bg: "from-yellow-700 to-amber-900",
+  },
+  {
+    id: 5,
+    title: "Group Study",
+    subtitle: "Collaborative Spaces",
+    span: "col-span-1 row-span-1",
+    bg: "from-primary-dark to-primary",
+  },
+  {
+    id: 6,
+    title: "Kids Section",
+    subtitle: "Little Readers",
+    span: "col-span-1 row-span-1",
+    bg: "from-orange-600 to-primary-light",
+  },
+  {
+    id: 7,
+    title: "Digital Zone",
+    subtitle: "Tech-Enhanced",
+    span: "col-span-2 row-span-1",
+    bg: "from-primary via-primary-lighter to-gold-dark",
+  },
 ];
 
-const EMOJIS = ['📚', '📖', '🏛️', '☕', '✏️', '🌿', '💡'];
+const EMOJIS = ["📚", "📖", "🏛️", "☕", "✏️", "🌿", "💡"];
 
 function GalleryCard({ item, index, onOpen }) {
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: '-30px' });
+  const isInView = useInView(ref, { once: true, margin: "-30px" });
 
   return (
     <motion.div
@@ -35,7 +77,8 @@ function GalleryCard({ item, index, onOpen }) {
       <div
         className="absolute inset-0 opacity-10"
         style={{
-          backgroundImage: 'radial-gradient(circle at 20% 20%, rgba(255,255,255,0.3) 0%, transparent 50%)',
+          backgroundImage:
+            "radial-gradient(circle at 20% 20%, rgba(255,255,255,0.3) 0%, transparent 50%)",
         }}
       />
 
@@ -84,14 +127,23 @@ export default function Gallery() {
             <span className="gradient-text-primary block">Wisdom Library</span>
           </h2>
           <p className="text-primary-lighter max-w-xl mx-auto">
-            Spaces crafted for concentration, comfort, and community — see what makes us special.
+            Spaces crafted for concentration, comfort, and community — see what
+            makes us special.
           </p>
         </motion.div>
 
         {/* Masonry-style grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4" style={{ gridAutoRows: '160px' }}>
+        <div
+          className="grid grid-cols-2 md:grid-cols-4 gap-4"
+          style={{ gridAutoRows: "160px" }}
+        >
           {GALLERY_ITEMS.map((item, i) => (
-            <GalleryCard key={item.id} item={item} index={i} onOpen={setSelected} />
+            <GalleryCard
+              key={item.id}
+              item={item}
+              index={i}
+              onOpen={setSelected}
+            />
           ))}
         </div>
 
@@ -100,10 +152,7 @@ export default function Gallery() {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.8 }}
           className="text-center text-primary-lighter text-sm mt-8"
-        >
-          📸 Replace these placeholders with actual library photos in{' '}
-          <code className="bg-primary-50 px-1 rounded text-xs">public/images/gallery/</code>
-        </motion.p>
+        ></motion.p>
       </div>
 
       {/* Lightbox */}
@@ -120,15 +169,21 @@ export default function Gallery() {
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.8, opacity: 0 }}
-              transition={{ type: 'spring', damping: 20 }}
+              transition={{ type: "spring", damping: 20 }}
               className="relative max-w-2xl w-full rounded-3xl overflow-hidden shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className={`h-80 bg-gradient-to-br ${selected.bg} flex items-center justify-center`}>
-                <div className="text-7xl">{EMOJIS[selected.id % EMOJIS.length]}</div>
+              <div
+                className={`h-80 bg-gradient-to-br ${selected.bg} flex items-center justify-center`}
+              >
+                <div className="text-7xl">
+                  {EMOJIS[selected.id % EMOJIS.length]}
+                </div>
               </div>
               <div className="bg-white p-6">
-                <h3 className="font-display font-bold text-primary text-xl">{selected.title}</h3>
+                <h3 className="font-display font-bold text-primary text-xl">
+                  {selected.title}
+                </h3>
                 <p className="text-primary-lighter mt-1">{selected.subtitle}</p>
               </div>
               <button
