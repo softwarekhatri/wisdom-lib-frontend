@@ -32,7 +32,7 @@ export default function Footer() {
               </div>
             </div>
             <p className="text-white/60 text-sm leading-relaxed max-w-sm">
-              A sanctuary for learners since 2009. We believe every book is a
+              A sanctuary for learners since 2026. We believe every book is a
               doorway to a new world, and every reader is a lifelong explorer.
               Join our family today.
             </p>
@@ -123,7 +123,12 @@ export default function Footer() {
           </p>
           <p className="text-white/30 text-xs">
             Deisgn & Developed by{" "}
-            <a href="https://khatri-software.vercel.app" target="_blank">
+            <a
+              href="https://khatri-software.vercel.app"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-gold/70 hover:text-gold underline underline-offset-2 transition-colors"
+            >
               KHATRI SOFTWARE
             </a>
           </p>
