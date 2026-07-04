@@ -180,7 +180,7 @@ export default function Contact() {
               <div className="flex flex-col items-center justify-center py-12 gap-3 text-center">
                 <CheckCircle className="w-12 h-12 text-green-500" />
                 <h4 className="font-semibold text-primary text-lg">
-                  Message Sent!
+                  Your message has been received! We'll get back to you soon.
                 </h4>
                 <p className="text-primary-lighter text-sm">
                   We&apos;ll get back to you soon.
