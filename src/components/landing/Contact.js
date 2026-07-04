@@ -54,15 +54,27 @@ export default function Contact() {
   });
   const [submitted, setSubmitted] = useState(false);
   const [sending, setSending] = useState(false);
+  const [error, setError] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSending(true);
-    await new Promise((r) => setTimeout(r, 1000));
-    setSending(false);
-    setSubmitted(true);
-    setForm({ name: "", email: "", type: "general", message: "" });
-    setTimeout(() => setSubmitted(false), 4000);
+    setError("");
+    try {
+      const res = await fetch("https://formspree.io/f/xkolkqno", {
+        method: "POST",
+        headers: { Accept: "application/json" },
+        body: new FormData(e.target),
+      });
+      if (!res.ok) throw new Error("Submission failed");
+      setSubmitted(true);
+      setForm({ name: "", email: "", type: "general", message: "" });
+      setTimeout(() => setSubmitted(false), 4000);
+    } catch {
+      setError("Failed to send message. Please try again.");
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -183,6 +195,7 @@ export default function Contact() {
                     </label>
                     <input
                       type="text"
+                      name="name"
                       required
                       value={form.name}
                       onChange={(e) =>
@@ -198,6 +211,7 @@ export default function Contact() {
                     </label>
                     <input
                       type="email"
+                      name="email"
                       required
                       value={form.email}
                       onChange={(e) =>
@@ -213,6 +227,7 @@ export default function Contact() {
                     Type
                   </label>
                   <select
+                    name="type"
                     value={form.type}
                     onChange={(e) =>
                       setForm((f) => ({ ...f, type: e.target.value }))
@@ -230,6 +245,7 @@ export default function Contact() {
                     Message
                   </label>
                   <textarea
+                    name="message"
                     required
                     rows={4}
                     value={form.message}
@@ -240,6 +256,7 @@ export default function Contact() {
                     className="input-field text-sm resize-none"
                   />
                 </div>
+                {error && <p className="text-red-600 text-xs">{error}</p>}
                 <button
                   type="submit"
                   disabled={sending}
