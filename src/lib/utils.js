@@ -153,3 +153,8 @@ export const clsx = (...classes) => classes.filter(Boolean).join(" ");
 export const apiBase =
   process.env.NEXT_PUBLIC_API_URL?.replace("/api", "") ||
   "https://wisdom-library-backend.vercel.app";
+
+export const photoUrl = (photo) => {
+  if (!photo) return "";
+  return /^https?:\/\//i.test(photo) ? photo : `${apiBase}${photo}`;
+};

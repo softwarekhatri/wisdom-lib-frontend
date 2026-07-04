@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '@/lib/api';
-import { formatDate, formatCurrency, getPaymentStatus, MONTH_NAMES, apiBase, getWhatsAppUrl } from '@/lib/utils';
+import { formatDate, formatCurrency, getPaymentStatus, MONTH_NAMES, photoUrl, getWhatsAppUrl } from '@/lib/utils';
 
 const WhatsAppIcon = ({ size = 16 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
@@ -186,8 +186,8 @@ export default function StudentDetailPage() {
             {/* Photo */}
             <div className="bg-gradient-to-br from-primary to-primary-light h-40 flex items-center justify-center relative">
               <div className="w-24 h-24 rounded-2xl bg-white/20 border-4 border-white/30 flex items-center justify-center overflow-hidden">
-                {(photoPreview || (student.photo && `${apiBase}${student.photo}`)) ? (
-                  <img src={photoPreview || `${apiBase}${student.photo}`} alt={student.fullName} className="w-full h-full object-cover" />
+                {(photoPreview || photoUrl(student.photo)) ? (
+                  <img src={photoPreview || photoUrl(student.photo)} alt={student.fullName} className="w-full h-full object-cover" />
                 ) : (
                   <User className="w-10 h-10 text-white/60" />
                 )}

@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '@/lib/api';
-import { formatDate, formatCurrency, apiBase, getWhatsAppUrl } from '@/lib/utils';
+import { formatDate, formatCurrency, photoUrl, getWhatsAppUrl } from '@/lib/utils';
 
 const WhatsAppIcon = ({ size = 14 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
@@ -109,7 +109,7 @@ export default function StudentsPage() {
                 <div className="w-14 h-14 rounded-xl bg-white/20 border border-white/20 flex items-center justify-center overflow-hidden flex-shrink-0">
                   {s.photo ? (
                     <img
-                      src={`${apiBase}${s.photo}`}
+                      src={photoUrl(s.photo)}
                       alt={s.fullName}
                       className="w-full h-full object-cover"
                       onError={e => { e.target.style.display = 'none'; }}

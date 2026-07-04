@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, IndianRupee, Banknote, CreditCard, CheckCircle, Loader2, CalendarCheck, ArrowRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '@/lib/api';
-import { MONTH_NAMES, formatCurrency, apiBase } from '@/lib/utils';
+import { MONTH_NAMES, formatCurrency, photoUrl } from '@/lib/utils';
 import { addMonths, addDays, format, differenceInDays } from 'date-fns';
 
 const TODAY = new Date().toISOString().split('T')[0];
@@ -138,7 +138,7 @@ export default function PaymentModal({ student, onClose, onSuccess }) {
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-white/20 border border-white/20 flex items-center justify-center overflow-hidden flex-shrink-0">
               {student?.photo
-                ? <img src={`${apiBase}${student.photo}`} alt="" className="w-full h-full object-cover" />
+                ? <img src={photoUrl(student.photo)} alt="" className="w-full h-full object-cover" />
                 : <span className="text-white font-bold text-base">{student?.fullName?.charAt(0)?.toUpperCase()}</span>}
             </div>
             <div>

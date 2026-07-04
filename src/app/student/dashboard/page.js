@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
 import {
   formatDate, formatCurrency, getPaymentStatus, getMembershipDuration,
-  isAnniversaryWindow, MONTH_NAMES, apiBase
+  isAnniversaryWindow, MONTH_NAMES, photoUrl
 } from '@/lib/utils';
 import {
   Calendar, CreditCard, User, BookOpen, Trophy, Star,
@@ -136,7 +136,7 @@ function MembershipCard({ student, membershipDuration }) {
               style={{ width: 72, height: 72 }}
             >
               {student?.photo ? (
-                <img src={`${apiBase}${student.photo}`} alt={student?.fullName} className="w-full h-full object-cover" />
+                <img src={photoUrl(student.photo)} alt={student?.fullName} className="w-full h-full object-cover" />
               ) : (
                 <User className="w-8 h-8 text-white/40" />
               )}

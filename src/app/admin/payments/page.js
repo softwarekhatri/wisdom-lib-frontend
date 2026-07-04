@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { Search, Calendar, IndianRupee, Download, ChevronLeft, ChevronRight, Filter } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '@/lib/api';
-import { formatDate, formatCurrency, MONTH_NAMES, apiBase } from '@/lib/utils';
+import { formatDate, formatCurrency, MONTH_NAMES, photoUrl } from '@/lib/utils';
 
 const PRESETS = [
   { label: 'Today', days: 0 },
@@ -138,7 +138,7 @@ export default function PaymentsPage() {
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-lg bg-primary-100 flex items-center justify-center text-xs font-bold text-primary overflow-hidden">
                           {p.student?.photo ? (
-                            <img src={`${apiBase}${p.student.photo}`} alt="" className="w-full h-full object-cover" />
+                            <img src={photoUrl(p.student.photo)} alt="" className="w-full h-full object-cover" />
                           ) : (
                             p.student?.fullName?.charAt(0)
                           )}
