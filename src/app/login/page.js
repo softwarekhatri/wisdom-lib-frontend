@@ -1,22 +1,24 @@
-'use client';
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { BookOpen, Eye, EyeOff, LogIn, ArrowLeft } from 'lucide-react';
-import toast from 'react-hot-toast';
-import { useAuth } from '@/contexts/AuthContext';
+"use client";
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { BookOpen, Eye, EyeOff, LogIn, ArrowLeft } from "lucide-react";
+import toast from "react-hot-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function LoginPage() {
   const { login, user, loading } = useAuth();
   const router = useRouter();
-  const [form, setForm] = useState({ username: '', password: '' });
+  const [form, setForm] = useState({ username: "", password: "" });
   const [showPass, setShowPass] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (!loading && user) {
-      router.replace(user.role === 'STUDENT' ? '/student/dashboard' : '/admin/dashboard');
+      router.replace(
+        user.role === "STUDENT" ? "/student/dashboard" : "/admin/dashboard",
+      );
     }
   }, [user, loading, router]);
 
@@ -26,9 +28,13 @@ export default function LoginPage() {
     try {
       const loggedUser = await login(form.username.trim(), form.password);
       toast.success(`Welcome back, ${loggedUser.fullName}!`);
-      router.push(loggedUser.role === 'STUDENT' ? '/student/dashboard' : '/admin/dashboard');
+      router.push(
+        loggedUser.role === "STUDENT"
+          ? "/student/dashboard"
+          : "/admin/dashboard",
+      );
     } catch (err) {
-      toast.error(err?.response?.data?.message || 'Invalid credentials');
+      toast.error(err?.response?.data?.message || "Invalid credentials");
     } finally {
       setSubmitting(false);
     }
@@ -47,7 +53,12 @@ export default function LoginPage() {
           className="absolute text-2xl opacity-10 pointer-events-none"
           style={{ left: `${10 + i * 16}%`, top: `${20 + (i % 3) * 20}%` }}
           animate={{ y: [0, -20, 0], rotate: [0, 5, -5, 0] }}
-          transition={{ duration: 5 + i, repeat: Infinity, delay: i * 0.8, ease: 'easeInOut' }}
+          transition={{
+            duration: 5 + i,
+            repeat: Infinity,
+            delay: i * 0.8,
+            ease: "easeInOut",
+          }}
         >
           📚
         </motion.div>
@@ -56,11 +67,14 @@ export default function LoginPage() {
       <motion.div
         initial={{ opacity: 0, y: 30, scale: 0.95 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.6, ease: 'easeOut' }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
         className="relative z-10 w-full max-w-md"
       >
         {/* Back link */}
-        <Link href="/" className="flex items-center gap-2 text-white/60 hover:text-white text-sm mb-6 transition-colors w-fit">
+        <Link
+          href="/"
+          className="flex items-center gap-2 text-white/60 hover:text-white text-sm mb-6 transition-colors w-fit"
+        >
           <ArrowLeft className="w-4 h-4" />
           Back to Home
         </Link>
@@ -72,13 +86,17 @@ export default function LoginPage() {
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
-              transition={{ duration: 0.5, delay: 0.2, type: 'spring' }}
+              transition={{ duration: 0.5, delay: 0.2, type: "spring" }}
               className="w-16 h-16 rounded-2xl bg-gold mx-auto flex items-center justify-center mb-4 shadow-lg"
             >
               <BookOpen className="w-8 h-8 text-primary-dark" />
             </motion.div>
-            <h1 className="font-display text-2xl font-bold text-white mb-1">Welcome Back</h1>
-            <p className="text-white/60 text-sm">Sign in to your Wisdom Library account</p>
+            <h1 className="font-display text-2xl font-bold text-white mb-1">
+              Welcome Back
+            </h1>
+            <p className="text-white/60 text-sm">
+              Sign in to your Wisdom Library account
+            </p>
           </div>
 
           {/* Form */}
@@ -93,11 +111,15 @@ export default function LoginPage() {
                   required
                   autoComplete="username"
                   value={form.username}
-                  onChange={e => setForm(f => ({ ...f, username: e.target.value }))}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, username: e.target.value }))
+                  }
                   placeholder="Enter your mobile or email"
                   className="input-field"
                 />
-                <p className="text-primary-lighter text-xs mt-1">Students use mobile number, Admin use email</p>
+                <p className="text-primary-lighter text-xs mt-1">
+                  Students use mobile number
+                </p>
               </div>
 
               <div>
@@ -106,11 +128,13 @@ export default function LoginPage() {
                 </label>
                 <div className="relative">
                   <input
-                    type={showPass ? 'text' : 'password'}
+                    type={showPass ? "text" : "password"}
                     required
                     autoComplete="current-password"
                     value={form.password}
-                    onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, password: e.target.value }))
+                    }
                     placeholder="Enter your password"
                     className="input-field pr-12"
                   />
@@ -142,7 +166,8 @@ export default function LoginPage() {
 
             <div className="mt-6 p-4 bg-primary-50 rounded-xl">
               <p className="text-primary-lighter text-xs text-center">
-                Forgot your password? Please contact the library admin to reset it.
+                Forgot your password? Please contact the library admin to reset
+                it.
               </p>
             </div>
           </div>
