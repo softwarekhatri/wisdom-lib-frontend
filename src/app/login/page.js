@@ -104,7 +104,7 @@ export default function LoginPage() {
             <form onSubmit={handleSubmit} className="space-y-5">
               <div>
                 <label className="block text-xs font-semibold text-primary mb-2 uppercase tracking-wide">
-                  Mobile Number / Email
+                  Mobile Number
                 </label>
                 <input
                   type="text"
@@ -114,12 +114,12 @@ export default function LoginPage() {
                   onChange={(e) =>
                     setForm((f) => ({ ...f, username: e.target.value }))
                   }
-                  placeholder="Enter your mobile or email"
+                  placeholder="9876543210"
                   className="input-field"
                 />
-                <p className="text-primary-lighter text-xs mt-1">
+                {/* <p className="text-primary-lighter text-xs mt-1">
                   Students use mobile number
-                </p>
+                </p> */}
               </div>
 
               <div>
