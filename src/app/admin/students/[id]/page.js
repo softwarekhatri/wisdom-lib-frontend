@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import {
   ArrowLeft, User, Phone, Mail, MapPin, Calendar, IndianRupee,
-  CreditCard, Edit, Save, X, Key, Upload, Plus, Check, Clock, Trash2, AlertTriangle
+  CreditCard, Edit, Save, X, Key, Upload, Camera, Plus, Check, Clock, Trash2, AlertTriangle, Hash
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '@/lib/api';
@@ -193,13 +193,22 @@ export default function StudentDetailPage() {
                 )}
               </div>
               {editing && (
-                <label className="absolute bottom-3 right-3 cursor-pointer bg-gold text-primary-dark p-2 rounded-xl shadow-lg hover:bg-gold-light transition-colors">
-                  <Upload size={14} />
-                  <input type="file" accept="image/*" className="hidden" onChange={e => {
-                    const f = e.target.files[0];
-                    if (f) { setPhotoFile(f); setPhotoPreview(URL.createObjectURL(f)); }
-                  }} />
-                </label>
+                <div className="absolute bottom-3 right-3 flex gap-2">
+                  <label className="cursor-pointer bg-gold text-primary-dark p-2 rounded-xl shadow-lg hover:bg-gold-light transition-colors" title="Upload Photo">
+                    <Upload size={14} />
+                    <input type="file" accept="image/*" className="hidden" onChange={e => {
+                      const f = e.target.files[0];
+                      if (f) { setPhotoFile(f); setPhotoPreview(URL.createObjectURL(f)); }
+                    }} />
+                  </label>
+                  <label className="cursor-pointer bg-white text-primary p-2 rounded-xl shadow-lg hover:bg-primary-50 transition-colors" title="Take Photo">
+                    <Camera size={14} />
+                    <input type="file" accept="image/*" capture="environment" className="hidden" onChange={e => {
+                      const f = e.target.files[0];
+                      if (f) { setPhotoFile(f); setPhotoPreview(URL.createObjectURL(f)); }
+                    }} />
+                  </label>
+                </div>
               )}
             </div>
 
@@ -214,6 +223,7 @@ export default function StudentDetailPage() {
 
               <div className="space-y-2 text-sm">
                 {[
+                  { icon: Hash, label: 'Username', value: student.username || '—' },
                   { icon: Calendar, label: 'Joined', value: formatDate(student.admissionDate) },
                   { icon: IndianRupee, label: 'Fees', value: `${formatCurrency(student.libraryFees)}/mo` },
                   { icon: Phone, label: 'Mobile', value: student.mobile || '—' },

@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, User, IndianRupee, Calendar, Upload, CreditCard, Banknote, CheckCircle, CalendarCheck, ArrowRight, Loader2, Phone } from 'lucide-react';
+import { X, User, IndianRupee, Calendar, Upload, Camera, CreditCard, Banknote, CheckCircle, CalendarCheck, ArrowRight, Loader2, Phone } from 'lucide-react';
 
 const WhatsAppIcon = ({ size = 16 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
@@ -154,12 +154,19 @@ export default function AdmissionModal({ onClose, onSuccess }) {
                   )}
                 </div>
                 <div>
-                  <label className="cursor-pointer flex items-center gap-2 px-4 py-2 bg-primary-50 hover:bg-primary-100 rounded-xl text-primary text-sm font-medium transition-colors border border-primary-200">
-                    <Upload className="w-4 h-4" />
-                    Upload Photo (Optional)
-                    <input type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} />
-                  </label>
-                  <p className="text-primary-lighter text-xs mt-1">Max 5MB, JPG/PNG</p>
+                  <div className="flex flex-wrap gap-2">
+                    <label className="cursor-pointer flex items-center gap-2 px-4 py-2 bg-primary-50 hover:bg-primary-100 rounded-xl text-primary text-sm font-medium transition-colors border border-primary-200">
+                      <Upload className="w-4 h-4" />
+                      Upload Photo
+                      <input type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} />
+                    </label>
+                    <label className="cursor-pointer flex items-center gap-2 px-4 py-2 bg-primary-50 hover:bg-primary-100 rounded-xl text-primary text-sm font-medium transition-colors border border-primary-200">
+                      <Camera className="w-4 h-4" />
+                      Take Photo
+                      <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handlePhotoChange} />
+                    </label>
+                  </div>
+                  <p className="text-primary-lighter text-xs mt-1">Optional, Max 5MB, JPG/PNG</p>
                 </div>
               </div>
 
