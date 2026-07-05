@@ -17,6 +17,7 @@ const WhatsAppIcon = ({ size = 16 }) => (
   </svg>
 );
 import PaymentModal from '@/components/admin/PaymentModal';
+import CameraCapture from '@/components/admin/CameraCapture';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function StudentDetailPage() {
@@ -38,6 +39,7 @@ export default function StudentDetailPage() {
   const [form, setForm] = useState({});
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
+  const [showCamera, setShowCamera] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deletingStudent, setDeletingStudent] = useState(false);
   const [pendingDeletePayment, setPendingDeletePayment] = useState(null);
@@ -201,13 +203,9 @@ export default function StudentDetailPage() {
                       if (f) { setPhotoFile(f); setPhotoPreview(URL.createObjectURL(f)); }
                     }} />
                   </label>
-                  <label className="cursor-pointer bg-white text-primary p-2 rounded-xl shadow-lg hover:bg-primary-50 transition-colors" title="Take Photo">
+                  <button type="button" onClick={() => setShowCamera(true)} className="bg-white text-primary p-2 rounded-xl shadow-lg hover:bg-primary-50 transition-colors" title="Take Photo">
                     <Camera size={14} />
-                    <input type="file" accept="image/*" capture="environment" className="hidden" onChange={e => {
-                      const f = e.target.files[0];
-                      if (f) { setPhotoFile(f); setPhotoPreview(URL.createObjectURL(f)); }
-                    }} />
-                  </label>
+                  </button>
                 </div>
               )}
             </div>
@@ -409,6 +407,13 @@ export default function StudentDetailPage() {
           />
         )}
       </AnimatePresence>
+
+      {showCamera && (
+        <CameraCapture
+          onClose={() => setShowCamera(false)}
+          onCapture={(file) => { setPhotoFile(file); setPhotoPreview(URL.createObjectURL(file)); setShowCamera(false); }}
+        />
+      )}
 
       {/* Delete Student Confirmation Modal */}
       <AnimatePresence>

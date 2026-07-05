@@ -12,6 +12,7 @@ import toast from 'react-hot-toast';
 import api from '@/lib/api';
 import { MONTH_NAMES, formatCurrency } from '@/lib/utils';
 import { addMonths, addDays, format } from 'date-fns';
+import CameraCapture from './CameraCapture';
 
 function buildCoveredMonths(startYear, startMonth, count) {
   const months = [];
@@ -30,6 +31,7 @@ export default function AdmissionModal({ onClose, onSuccess }) {
   const [loading, setLoading] = useState(false);
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
+  const [showCamera, setShowCamera] = useState(false);
   const [createdStudent, setCreatedStudent] = useState(null);
 
   const [studentForm, setStudentForm] = useState({
@@ -58,6 +60,12 @@ export default function AdmissionModal({ onClose, onSuccess }) {
       setPhotoFile(file);
       setPhotoPreview(URL.createObjectURL(file));
     }
+  };
+
+  const handlePhotoCapture = (file) => {
+    setPhotoFile(file);
+    setPhotoPreview(URL.createObjectURL(file));
+    setShowCamera(false);
   };
 
   const handleStudentSubmit = async (e) => {
@@ -160,11 +168,14 @@ export default function AdmissionModal({ onClose, onSuccess }) {
                       Upload Photo
                       <input type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} />
                     </label>
-                    <label className="cursor-pointer flex items-center gap-2 px-4 py-2 bg-primary-50 hover:bg-primary-100 rounded-xl text-primary text-sm font-medium transition-colors border border-primary-200">
+                    <button
+                      type="button"
+                      onClick={() => setShowCamera(true)}
+                      className="cursor-pointer flex items-center gap-2 px-4 py-2 bg-primary-50 hover:bg-primary-100 rounded-xl text-primary text-sm font-medium transition-colors border border-primary-200"
+                    >
                       <Camera className="w-4 h-4" />
                       Take Photo
-                      <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handlePhotoChange} />
-                    </label>
+                    </button>
                   </div>
                   <p className="text-primary-lighter text-xs mt-1">Optional, Max 5MB, JPG/PNG</p>
                 </div>
@@ -402,6 +413,10 @@ export default function AdmissionModal({ onClose, onSuccess }) {
           })()}
         </div>
       </motion.div>
+
+      {showCamera && (
+        <CameraCapture onClose={() => setShowCamera(false)} onCapture={handlePhotoCapture} />
+      )}
     </div>
   );
 }
