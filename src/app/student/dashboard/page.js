@@ -32,6 +32,7 @@ import {
   Shield,
 } from "lucide-react";
 import toast from "react-hot-toast";
+import CopyButton from "@/components/CopyButton";
 
 /* ─── Confetti ──────────────────────────────────────────────────── */
 const CONFETTI_COLORS = [
@@ -184,8 +185,9 @@ function MembershipCard({ student, membershipDuration }) {
             <div className="text-gold/60 text-xs tracking-widest uppercase mb-0.5">
               Username
             </div>
-            <div className="text-white/80 font-mono text-sm font-semibold">
+            <div className="flex items-center gap-1.5 text-white/80 font-mono text-sm font-semibold">
               {username}
+              <CopyButton value={username} className="text-gold/60 hover:text-gold" />
             </div>
           </div>
         </div>

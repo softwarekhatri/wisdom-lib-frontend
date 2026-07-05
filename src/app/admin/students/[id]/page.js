@@ -18,6 +18,7 @@ const WhatsAppIcon = ({ size = 16 }) => (
 );
 import PaymentModal from '@/components/admin/PaymentModal';
 import CameraCapture from '@/components/admin/CameraCapture';
+import CopyButton from '@/components/CopyButton';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function StudentDetailPage() {
@@ -221,17 +222,20 @@ export default function StudentDetailPage() {
 
               <div className="space-y-2 text-sm">
                 {[
-                  { icon: Hash, label: 'Username', value: student.username || '—' },
+                  { icon: Hash, label: 'Username', value: student.username || '—', copyable: true },
                   { icon: Calendar, label: 'Joined', value: formatDate(student.admissionDate) },
                   { icon: IndianRupee, label: 'Fees', value: `${formatCurrency(student.libraryFees)}/mo` },
                   { icon: Phone, label: 'Mobile', value: student.mobile || '—' },
                   { icon: Phone, label: 'WhatsApp', value: student.whatsappNumber || student.mobile || '—' },
                   { icon: Mail, label: 'Email', value: student.email || '—' },
-                ].map(({ icon: Icon, label, value }) => (
+                ].map(({ icon: Icon, label, value, copyable }) => (
                   <div key={label} className="flex items-center gap-2 text-primary-lighter">
                     <Icon className="w-4 h-4 flex-shrink-0" />
                     <span className="text-primary-lighter">{label}:</span>
                     <span className="text-primary font-medium truncate">{value}</span>
+                    {copyable && student.username && (
+                      <CopyButton value={student.username} className="text-primary-lighter hover:text-primary flex-shrink-0" />
+                    )}
                   </div>
                 ))}
                 {/* Next Due Date */}
