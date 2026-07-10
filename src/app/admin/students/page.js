@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import {
   Search, UserPlus, User, Phone, Calendar, IndianRupee,
-  Eye, Edit, ChevronLeft, ChevronRight, CreditCard, Clock
+  Eye, Edit, ChevronLeft, ChevronRight, CreditCard, Clock, Download, Loader2
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '@/lib/api';
@@ -30,6 +30,7 @@ export default function StudentsPage() {
   const [showAdmission, setShowAdmission] = useState(false);
   const [payStudent, setPayStudent] = useState(null); // student to pay
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     const t = setTimeout(() => { setDebouncedSearch(search); setPage(1); }, 400);
@@ -48,6 +49,24 @@ export default function StudentsPage() {
 
   useEffect(() => { fetchStudents(); }, [fetchStudents]);
 
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const res = await api.get('/students/export/excel', { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'students.xlsx';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch {
+      toast.error('Failed to export students');
+    }
+    setExporting(false);
+  };
+
   return (
     <div className="max-w-6xl mx-auto">
       {/* Page header */}
@@ -58,13 +77,23 @@ export default function StudentsPage() {
             {pagination ? `${pagination.total} total students` : 'Loading...'}
           </p>
         </div>
-        <button
-          onClick={() => setShowAdmission(true)}
-          className="btn-primary flex items-center gap-2 w-fit"
-        >
-          <UserPlus className="w-5 h-5" />
-          Admit Student
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleExport}
+            disabled={exporting}
+            className="flex items-center gap-2 w-fit px-4 py-2.5 rounded-xl border border-primary-200 text-primary text-sm font-medium hover:bg-primary-50 transition-colors disabled:opacity-50"
+          >
+            {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+            Export Excel
+          </button>
+          <button
+            onClick={() => setShowAdmission(true)}
+            className="btn-primary flex items-center gap-2 w-fit"
+          >
+            <UserPlus className="w-5 h-5" />
+            Admit Student
+          </button>
+        </div>
       </div>
 
       {/* Search */}
@@ -144,6 +173,12 @@ export default function StudentsPage() {
                   {formatCurrency(s.libraryFees)}<span className="text-primary-lighter font-normal">/mo</span>
                 </span>
               </div>
+              {(s.seatNumber || s.batch) && (
+                <div className="px-5 py-2 flex items-center gap-3 text-xs border-b border-primary-50 text-primary-lighter">
+                  {s.seatNumber && <span>Seat <strong className="text-primary">{s.seatNumber}</strong></span>}
+                  {s.batch && <span>{s.batch}</span>}
+                </div>
+              )}
               {/* Next Due Date */}
               {(() => {
                 const days = s.nextDueDate ? Math.ceil((new Date(s.nextDueDate) - new Date()) / 86400000) : null;

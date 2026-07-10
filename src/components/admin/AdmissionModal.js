@@ -10,7 +10,7 @@ const WhatsAppIcon = ({ size = 16 }) => (
 );
 import toast from 'react-hot-toast';
 import api from '@/lib/api';
-import { MONTH_NAMES, formatCurrency } from '@/lib/utils';
+import { MONTH_NAMES, formatCurrency, BATCHES } from '@/lib/utils';
 import { addMonths, addDays, format } from 'date-fns';
 import CameraCapture from './CameraCapture';
 
@@ -43,6 +43,8 @@ export default function AdmissionModal({ onClose, onSuccess }) {
     admissionDate: CURRENT.toISOString().split('T')[0],
     libraryFees: '',
     password: '',
+    seatNumber: '',
+    batch: '',
   });
   const [whatsappSameAsMobile, setWhatsappSameAsMobile] = useState(false);
 
@@ -242,6 +244,17 @@ export default function AdmissionModal({ onClose, onSuccess }) {
                 <div>
                   <label className="block text-xs font-semibold text-primary mb-1.5">Password</label>
                   <input value={studentForm.password} onChange={sf('password')} placeholder="Default: 123456" className="input-field" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-primary mb-1.5">Seat Number (Optional)</label>
+                  <input value={studentForm.seatNumber} onChange={sf('seatNumber')} placeholder="e.g. 12" className="input-field" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-primary mb-1.5">Batch (Optional)</label>
+                  <select value={studentForm.batch} onChange={sf('batch')} className="input-field">
+                    <option value="">Not decided</option>
+                    {BATCHES.map(b => <option key={b} value={b}>{b}</option>)}
+                  </select>
                 </div>
               </div>
 

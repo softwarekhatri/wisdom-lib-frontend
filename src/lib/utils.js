@@ -158,3 +158,6 @@ export const photoUrl = (photo) => {
   if (!photo) return "";
   return /^https?:\/\//i.test(photo) ? photo : `${apiBase}${photo}`;
 };
+
+// Keep in sync with backend/src/utils/batches.js — add more here to extend.
+export const BATCHES = ["6 AM - 10 AM", "10 AM - 2 PM", "2 PM - 6 PM", "6 PM - 10 PM"];

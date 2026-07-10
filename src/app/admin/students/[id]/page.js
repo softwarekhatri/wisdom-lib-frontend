@@ -5,11 +5,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import {
   ArrowLeft, User, Phone, Mail, MapPin, Calendar, IndianRupee,
-  CreditCard, Edit, Save, X, Key, Upload, Camera, Plus, Check, Clock, Trash2, AlertTriangle, Hash
+  CreditCard, Edit, Save, X, Key, Upload, Camera, Plus, Check, Clock, Trash2, AlertTriangle, Hash, Armchair
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '@/lib/api';
-import { formatDate, formatCurrency, getPaymentStatus, MONTH_NAMES, photoUrl, getWhatsAppUrl } from '@/lib/utils';
+import { formatDate, formatCurrency, getPaymentStatus, MONTH_NAMES, photoUrl, getWhatsAppUrl, BATCHES } from '@/lib/utils';
 
 const WhatsAppIcon = ({ size = 16 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
@@ -61,6 +61,8 @@ export default function StudentDetailPage() {
         admissionDate: data.student.admissionDate?.split('T')[0] || '',
         libraryFees: data.student.libraryFees || 0,
         isActive: data.student.isActive,
+        seatNumber: data.student.seatNumber || '',
+        batch: data.student.batch || '',
       });
     } catch { toast.error('Failed to load student'); }
     setLoading(false);
@@ -228,6 +230,8 @@ export default function StudentDetailPage() {
                   { icon: Phone, label: 'Mobile', value: student.mobile || '—' },
                   { icon: Phone, label: 'WhatsApp', value: student.whatsappNumber || student.mobile || '—' },
                   { icon: Mail, label: 'Email', value: student.email || '—' },
+                  { icon: Armchair, label: 'Seat', value: student.seatNumber || '—' },
+                  { icon: Clock, label: 'Batch', value: student.batch || 'Not decided' },
                 ].map(({ icon: Icon, label, value, copyable }) => (
                   <div key={label} className="flex items-center gap-2 text-primary-lighter">
                     <Icon className="w-4 h-4 flex-shrink-0" />
@@ -314,6 +318,17 @@ export default function StudentDetailPage() {
                 <div>
                   <label className="block text-xs font-semibold text-primary mb-1.5">Monthly Fees (₹)</label>
                   <input type="number" min="0" value={form.libraryFees || 0} onChange={e => setForm(f => ({ ...f, libraryFees: e.target.value }))} className="input-field" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-primary mb-1.5">Seat Number</label>
+                  <input value={form.seatNumber || ''} onChange={e => setForm(f => ({ ...f, seatNumber: e.target.value }))} placeholder="e.g. 12" className="input-field" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-primary mb-1.5">Batch</label>
+                  <select value={form.batch || ''} onChange={e => setForm(f => ({ ...f, batch: e.target.value }))} className="input-field">
+                    <option value="">Not decided</option>
+                    {BATCHES.map(b => <option key={b} value={b}>{b}</option>)}
+                  </select>
                 </div>
                 <div className="sm:col-span-2 flex items-center gap-2">
                   <input type="checkbox" id="isActive" checked={form.isActive} onChange={e => setForm(f => ({ ...f, isActive: e.target.checked }))} className="w-4 h-4 accent-primary" />

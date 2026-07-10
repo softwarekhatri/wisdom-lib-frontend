@@ -30,6 +30,7 @@ import {
   Eye,
   EyeOff,
   Shield,
+  Armchair,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import CopyButton from "@/components/CopyButton";
@@ -218,7 +219,7 @@ function MembershipCard({ student, membershipDuration }) {
             <h2 className="font-display text-xl sm:text-2xl font-bold text-white leading-tight">
               {student?.fullName}
             </h2>
-            <div className="flex items-center gap-2 mt-1.5">
+            <div className="flex items-center gap-2 mt-1.5 flex-wrap">
               <span className="text-gold/80 text-xs flex items-center gap-1">
                 <Calendar className="w-3 h-3" />
                 Since {formatDate(student?.admissionDate, "MMM yyyy")}
@@ -229,6 +230,16 @@ function MembershipCard({ student, membershipDuration }) {
                   {membershipDuration.years}yr Member
                 </span>
               )}
+            </div>
+            <div className="flex items-center gap-2 mt-2 flex-wrap">
+              <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/10 text-white/70 text-xs">
+                <Armchair className="w-3 h-3" />
+                Seat {student?.seatNumber || "—"}
+              </span>
+              <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/10 text-white/70 text-xs">
+                <Clock className="w-3 h-3" />
+                {student?.batch || "Not decided"}
+              </span>
             </div>
           </div>
         </div>
