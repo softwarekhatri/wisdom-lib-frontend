@@ -186,6 +186,7 @@ export default function PaymentModal({ student, onClose, onSuccess }) {
                   min="1"
                   value={amount}
                   onChange={e => setAmount(e.target.value)}
+                  onWheel={e => e.target.blur()}
                   placeholder={fee > 0 ? `e.g. ${fee}` : '0'}
                   className="input-field pl-9 text-2xl font-bold tracking-tight"
                   style={{ fontSize: '1.4rem' }}

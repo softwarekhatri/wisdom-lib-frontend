@@ -251,7 +251,7 @@ export default function AdmissionModal({ onClose, onSuccess }) {
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-primary mb-1.5">Monthly Fees (₹) *</label>
-                  <input type="number" required min="0" value={studentForm.libraryFees} onChange={sf('libraryFees')} placeholder="e.g. 500" className="input-field" />
+                  <input type="number" required min="0" value={studentForm.libraryFees} onChange={sf('libraryFees')} onWheel={e => e.target.blur()} placeholder="e.g. 500" className="input-field" />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-primary mb-1.5">Password</label>
@@ -355,6 +355,7 @@ export default function AdmissionModal({ onClose, onSuccess }) {
                       min="1"
                       value={paymentForm.amount}
                       onChange={pf('amount')}
+                      onWheel={e => e.target.blur()}
                       placeholder={fee > 0 ? `e.g. ${fee}` : '0'}
                       className="input-field pl-9 text-2xl font-bold tracking-tight"
                       style={{ fontSize: '1.4rem' }}
