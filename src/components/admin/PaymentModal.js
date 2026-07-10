@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, IndianRupee, Banknote, CreditCard, CheckCircle, Loader2, CalendarCheck, ArrowRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '@/lib/api';
-import { MONTH_NAMES, formatCurrency, photoUrl } from '@/lib/utils';
+import { MONTH_NAMES, formatCurrency, photoUrl, blockNumberSpin } from '@/lib/utils';
 import { addMonths, addDays, format, differenceInDays } from 'date-fns';
 
 const TODAY = new Date().toISOString().split('T')[0];
@@ -186,7 +186,7 @@ export default function PaymentModal({ student, onClose, onSuccess }) {
                   min="1"
                   value={amount}
                   onChange={e => setAmount(e.target.value)}
-                  onWheel={e => e.target.blur()}
+                  {...blockNumberSpin}
                   placeholder={fee > 0 ? `e.g. ${fee}` : '0'}
                   className="input-field pl-9 text-2xl font-bold tracking-tight"
                   style={{ fontSize: '1.4rem' }}

@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '@/lib/api';
-import { formatDate, formatCurrency, getPaymentStatus, MONTH_NAMES, photoUrl, getWhatsAppUrl, BATCHES } from '@/lib/utils';
+import { formatDate, formatCurrency, getPaymentStatus, MONTH_NAMES, photoUrl, getWhatsAppUrl, BATCHES, blockNumberSpin } from '@/lib/utils';
 
 const WhatsAppIcon = ({ size = 16 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
@@ -343,7 +343,7 @@ export default function StudentDetailPage() {
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-primary mb-1.5">Monthly Fees (₹)</label>
-                  <input type="number" min="0" value={form.libraryFees || 0} onChange={e => setForm(f => ({ ...f, libraryFees: e.target.value }))} onWheel={e => e.target.blur()} className="input-field" />
+                  <input type="number" min="0" value={form.libraryFees || 0} onChange={e => setForm(f => ({ ...f, libraryFees: e.target.value }))} {...blockNumberSpin} className="input-field" />
                 </div>
                 <div className="sm:col-span-2">
                   <div className="flex items-center justify-between mb-1.5">
