@@ -278,7 +278,7 @@ export default function AdmissionModal({ onClose, onSuccess }) {
                         <select
                           value={row.batch}
                           onChange={e => updateSeatRow(i, 'batch', e.target.value)}
-                          className="input-field flex-1"
+                          className="input-field flex-1 min-w-[160px] truncate"
                         >
                           <option value="">Select batch</option>
                           {BATCHES.map(b => <option key={b} value={b}>{b}</option>)}
@@ -287,7 +287,7 @@ export default function AdmissionModal({ onClose, onSuccess }) {
                           value={row.seatNumber}
                           onChange={e => updateSeatRow(i, 'seatNumber', e.target.value)}
                           placeholder="Seat no."
-                          className="input-field w-28"
+                          className="input-field w-24 flex-shrink-0"
                         />
                         <button type="button" onClick={() => removeSeatRow(i)} className="p-2.5 rounded-xl text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors flex-shrink-0">
                           <Trash2 className="w-4 h-4" />
