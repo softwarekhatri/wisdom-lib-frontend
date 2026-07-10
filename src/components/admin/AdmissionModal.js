@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, User, IndianRupee, Calendar, Upload, Camera, CreditCard, Banknote, CheckCircle, CalendarCheck, ArrowRight, Loader2, Phone } from 'lucide-react';
+import { X, User, IndianRupee, Calendar, Upload, Camera, CreditCard, Banknote, CheckCircle, CalendarCheck, ArrowRight, Loader2, Phone, Plus, Trash2, Armchair } from 'lucide-react';
 
 const WhatsAppIcon = ({ size = 16 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
@@ -43,10 +43,14 @@ export default function AdmissionModal({ onClose, onSuccess }) {
     admissionDate: CURRENT.toISOString().split('T')[0],
     libraryFees: '',
     password: '',
-    seatNumber: '',
-    batch: '',
   });
+  const [seatAssignments, setSeatAssignments] = useState([]);
   const [whatsappSameAsMobile, setWhatsappSameAsMobile] = useState(false);
+
+  const addSeatRow = () => setSeatAssignments(rows => [...rows, { batch: '', seatNumber: '' }]);
+  const removeSeatRow = (index) => setSeatAssignments(rows => rows.filter((_, i) => i !== index));
+  const updateSeatRow = (index, field, value) =>
+    setSeatAssignments(rows => rows.map((row, i) => (i === index ? { ...row, [field]: value } : row)));
 
   const [paymentForm, setPaymentForm] = useState({
     addPayment: false,
@@ -72,10 +76,18 @@ export default function AdmissionModal({ onClose, onSuccess }) {
 
   const handleStudentSubmit = async (e) => {
     e.preventDefault();
+
+    const validRows = seatAssignments.filter(r => r.batch && r.seatNumber);
+    const batchesUsed = validRows.map(r => r.batch);
+    if (new Set(batchesUsed).size !== batchesUsed.length) {
+      return toast.error('Only one seat can be assigned per batch — remove the duplicate batch row');
+    }
+
     setLoading(true);
     try {
       const fd = new FormData();
       Object.entries(studentForm).forEach(([k, v]) => v && fd.append(k, v));
+      fd.append('seatAssignments', JSON.stringify(validRows));
       if (photoFile) fd.append('photo', photoFile);
 
       const { data } = await api.post('/students', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
@@ -245,17 +257,45 @@ export default function AdmissionModal({ onClose, onSuccess }) {
                   <label className="block text-xs font-semibold text-primary mb-1.5">Password</label>
                   <input value={studentForm.password} onChange={sf('password')} placeholder="Default: 123456" className="input-field" />
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold text-primary mb-1.5">Seat Number (Optional)</label>
-                  <input value={studentForm.seatNumber} onChange={sf('seatNumber')} placeholder="e.g. 12" className="input-field" />
+              </div>
+
+              {/* Seat assignments — a student can hold a seat in multiple batches */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-semibold text-primary flex items-center gap-1.5">
+                    <Armchair className="w-3.5 h-3.5" /> Seat Assignments (Optional)
+                  </label>
+                  <button type="button" onClick={addSeatRow} className="flex items-center gap-1 text-xs font-semibold text-primary hover:text-primary-dark">
+                    <Plus className="w-3.5 h-3.5" /> Add Batch
+                  </button>
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold text-primary mb-1.5">Batch (Optional)</label>
-                  <select value={studentForm.batch} onChange={sf('batch')} className="input-field">
-                    <option value="">Not decided</option>
-                    {BATCHES.map(b => <option key={b} value={b}>{b}</option>)}
-                  </select>
-                </div>
+                {seatAssignments.length === 0 ? (
+                  <p className="text-xs text-primary-lighter">No seat assigned yet — click &ldquo;Add Batch&rdquo; to assign one.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {seatAssignments.map((row, i) => (
+                      <div key={i} className="flex gap-2 items-center">
+                        <select
+                          value={row.batch}
+                          onChange={e => updateSeatRow(i, 'batch', e.target.value)}
+                          className="input-field flex-1"
+                        >
+                          <option value="">Select batch</option>
+                          {BATCHES.map(b => <option key={b} value={b}>{b}</option>)}
+                        </select>
+                        <input
+                          value={row.seatNumber}
+                          onChange={e => updateSeatRow(i, 'seatNumber', e.target.value)}
+                          placeholder="Seat no."
+                          className="input-field w-28"
+                        />
+                        <button type="button" onClick={() => removeSeatRow(i)} className="p-2.5 rounded-xl text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors flex-shrink-0">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Option to add payment */}

@@ -4,13 +4,14 @@ import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard, Users, CreditCard, BarChart3, BookOpen,
-  LogOut, X, ChevronRight, UserCircle
+  LogOut, X, ChevronRight, UserCircle, Armchair
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 const NAV_ITEMS = [
   { href: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/admin/students', icon: Users, label: 'Students' },
+  { href: '/admin/seats', icon: Armchair, label: 'Seat Map' },
   { href: '/admin/payments', icon: CreditCard, label: 'Payments' },
   { href: '/admin/reports', icon: BarChart3, label: 'Reports' },
   { href: '/admin/profile', icon: UserCircle, label: 'My Profile' },

@@ -38,6 +38,7 @@ export default function StudentDetailPage() {
   const [showResetPass, setShowResetPass] = useState(false);
   const [newPass, setNewPass] = useState('');
   const [form, setForm] = useState({});
+  const [seatAssignments, setSeatAssignments] = useState([]);
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
   const [showCamera, setShowCamera] = useState(false);
@@ -61,21 +62,33 @@ export default function StudentDetailPage() {
         admissionDate: data.student.admissionDate?.split('T')[0] || '',
         libraryFees: data.student.libraryFees || 0,
         isActive: data.student.isActive,
-        seatNumber: data.student.seatNumber || '',
-        batch: data.student.batch || '',
       });
+      setSeatAssignments((data.student.seatAssignments || []).map(a => ({ ...a })));
     } catch { toast.error('Failed to load student'); }
     setLoading(false);
   };
+
+  const addSeatRow = () => setSeatAssignments(rows => [...rows, { batch: '', seatNumber: '' }]);
+  const removeSeatRow = (index) => setSeatAssignments(rows => rows.filter((_, i) => i !== index));
+  const updateSeatRow = (index, field, value) =>
+    setSeatAssignments(rows => rows.map((row, i) => (i === index ? { ...row, [field]: value } : row)));
 
   useEffect(() => { fetchData(); }, [id]);
 
   const handleSave = async (e) => {
     e.preventDefault();
+
+    const validRows = seatAssignments.filter(r => r.batch && r.seatNumber);
+    const batchesUsed = validRows.map(r => r.batch);
+    if (new Set(batchesUsed).size !== batchesUsed.length) {
+      return toast.error('Only one seat can be assigned per batch — remove the duplicate batch row');
+    }
+
     setSaving(true);
     try {
       const fd = new FormData();
       Object.entries(form).forEach(([k, v]) => fd.append(k, v));
+      fd.append('seatAssignments', JSON.stringify(validRows));
       if (photoFile) fd.append('photo', photoFile);
       const { data } = await api.put(`/students/${id}`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
       setStudent(data.student);
@@ -230,8 +243,6 @@ export default function StudentDetailPage() {
                   { icon: Phone, label: 'Mobile', value: student.mobile || '—' },
                   { icon: Phone, label: 'WhatsApp', value: student.whatsappNumber || student.mobile || '—' },
                   { icon: Mail, label: 'Email', value: student.email || '—' },
-                  { icon: Armchair, label: 'Seat', value: student.seatNumber || '—' },
-                  { icon: Clock, label: 'Batch', value: student.batch || 'Not decided' },
                 ].map(({ icon: Icon, label, value, copyable }) => (
                   <div key={label} className="flex items-center gap-2 text-primary-lighter">
                     <Icon className="w-4 h-4 flex-shrink-0" />
@@ -256,6 +267,21 @@ export default function StudentDetailPage() {
                     </div>
                   );
                 })()}
+                <div className="flex items-start gap-2 text-primary-lighter">
+                  <Armchair className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                  <span className="text-primary-lighter">Seats:</span>
+                  {student.seatAssignments?.length ? (
+                    <div className="flex flex-wrap gap-1.5">
+                      {student.seatAssignments.map(a => (
+                        <span key={a.batch} className="px-2 py-0.5 rounded-full bg-primary-50 text-primary text-xs font-medium">
+                          {a.batch}: Seat {a.seatNumber}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <span className="text-primary font-medium">Not decided</span>
+                  )}
+                </div>
               </div>
 
               {/* WhatsApp Reminder button */}
@@ -319,16 +345,42 @@ export default function StudentDetailPage() {
                   <label className="block text-xs font-semibold text-primary mb-1.5">Monthly Fees (₹)</label>
                   <input type="number" min="0" value={form.libraryFees || 0} onChange={e => setForm(f => ({ ...f, libraryFees: e.target.value }))} className="input-field" />
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold text-primary mb-1.5">Seat Number</label>
-                  <input value={form.seatNumber || ''} onChange={e => setForm(f => ({ ...f, seatNumber: e.target.value }))} placeholder="e.g. 12" className="input-field" />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-primary mb-1.5">Batch</label>
-                  <select value={form.batch || ''} onChange={e => setForm(f => ({ ...f, batch: e.target.value }))} className="input-field">
-                    <option value="">Not decided</option>
-                    {BATCHES.map(b => <option key={b} value={b}>{b}</option>)}
-                  </select>
+                <div className="sm:col-span-2">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-semibold text-primary flex items-center gap-1.5">
+                      <Armchair className="w-3.5 h-3.5" /> Seat Assignments
+                    </label>
+                    <button type="button" onClick={addSeatRow} className="flex items-center gap-1 text-xs font-semibold text-primary hover:text-primary-dark">
+                      <Plus className="w-3.5 h-3.5" /> Add Batch
+                    </button>
+                  </div>
+                  {seatAssignments.length === 0 ? (
+                    <p className="text-xs text-primary-lighter">No seat assigned yet — click &ldquo;Add Batch&rdquo; to assign one.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {seatAssignments.map((row, i) => (
+                        <div key={i} className="flex gap-2 items-center">
+                          <select
+                            value={row.batch}
+                            onChange={e => updateSeatRow(i, 'batch', e.target.value)}
+                            className="input-field flex-1"
+                          >
+                            <option value="">Select batch</option>
+                            {BATCHES.map(b => <option key={b} value={b}>{b}</option>)}
+                          </select>
+                          <input
+                            value={row.seatNumber}
+                            onChange={e => updateSeatRow(i, 'seatNumber', e.target.value)}
+                            placeholder="Seat no."
+                            className="input-field w-28"
+                          />
+                          <button type="button" onClick={() => removeSeatRow(i)} className="p-2.5 rounded-xl text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors flex-shrink-0">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <div className="sm:col-span-2 flex items-center gap-2">
                   <input type="checkbox" id="isActive" checked={form.isActive} onChange={e => setForm(f => ({ ...f, isActive: e.target.checked }))} className="w-4 h-4 accent-primary" />

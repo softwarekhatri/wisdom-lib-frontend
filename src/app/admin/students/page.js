@@ -173,10 +173,13 @@ export default function StudentsPage() {
                   {formatCurrency(s.libraryFees)}<span className="text-primary-lighter font-normal">/mo</span>
                 </span>
               </div>
-              {(s.seatNumber || s.batch) && (
-                <div className="px-5 py-2 flex items-center gap-3 text-xs border-b border-primary-50 text-primary-lighter">
-                  {s.seatNumber && <span>Seat <strong className="text-primary">{s.seatNumber}</strong></span>}
-                  {s.batch && <span>{s.batch}</span>}
+              {s.seatAssignments?.length > 0 && (
+                <div className="px-5 py-2 flex flex-wrap items-center gap-1.5 text-xs border-b border-primary-50">
+                  {s.seatAssignments.map(a => (
+                    <span key={a.batch} className="px-2 py-0.5 rounded-full bg-primary-50 text-primary font-medium">
+                      {a.batch}: Seat {a.seatNumber}
+                    </span>
+                  ))}
                 </div>
               )}
               {/* Next Due Date */}

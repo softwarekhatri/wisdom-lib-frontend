@@ -232,14 +232,22 @@ function MembershipCard({ student, membershipDuration }) {
               )}
             </div>
             <div className="flex items-center gap-2 mt-2 flex-wrap">
-              <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/10 text-white/70 text-xs">
-                <Armchair className="w-3 h-3" />
-                Seat {student?.seatNumber || "—"}
-              </span>
-              <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/10 text-white/70 text-xs">
-                <Clock className="w-3 h-3" />
-                {student?.batch || "Not decided"}
-              </span>
+              {student?.seatAssignments?.length > 0 ? (
+                student.seatAssignments.map((a) => (
+                  <span
+                    key={a.batch}
+                    className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/10 text-white/70 text-xs"
+                  >
+                    <Armchair className="w-3 h-3" />
+                    Seat {a.seatNumber} · {a.batch}
+                  </span>
+                ))
+              ) : (
+                <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/10 text-white/70 text-xs">
+                  <Clock className="w-3 h-3" />
+                  Not decided
+                </span>
+              )}
             </div>
           </div>
         </div>
