@@ -44,7 +44,7 @@ export default function SeatMapPage() {
           <Armchair className="w-7 h-7" />
           Seat Map
         </h1>
-        <p className="text-primary-lighter mt-1">Search which student occupies which seat, by batch</p>
+        <p className="text-primary-lighter mt-1">Browse students by batch, or search for who holds a specific seat</p>
       </div>
 
       {/* Filters */}
@@ -77,7 +77,9 @@ export default function SeatMapPage() {
       ) : seats.length === 0 ? (
         <div className="text-center py-16 bg-white rounded-2xl border border-primary-100">
           <Armchair className="w-12 h-12 text-primary-lighter mx-auto mb-3" />
-          <p className="text-primary-lighter">No seats assigned yet for this filter</p>
+          <p className="text-primary-lighter">
+            {seatNumber ? 'No student holds a matching seat' : 'No students found for this filter'}
+          </p>
         </div>
       ) : (
         <div className="space-y-6">
@@ -85,29 +87,36 @@ export default function SeatMapPage() {
             <div key={batchName} className="bg-white rounded-2xl border border-primary-100 overflow-hidden">
               <div className="px-5 py-3 border-b border-primary-50 flex items-center justify-between bg-primary-50/50">
                 <h2 className="font-semibold text-primary text-sm">{batchName}</h2>
-                <span className="text-xs text-primary-lighter">{rows.length} seat{rows.length !== 1 ? 's' : ''} occupied</span>
+                <span className="text-xs text-primary-lighter">{rows.length} student{rows.length !== 1 ? 's' : ''}</span>
               </div>
               <div className="divide-y divide-primary-50">
                 {rows.map((s) => (
                   <motion.div
-                    key={`${s.batch}-${s.seatNumber}-${s.studentId}`}
+                    key={`${s.batch}-${s.studentId}`}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     className="px-5 py-3 flex items-center gap-4"
                   >
-                    <div className="w-10 h-10 rounded-xl bg-primary-100 flex items-center justify-center text-primary font-bold text-sm flex-shrink-0">
-                      {s.seatNumber}
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm flex-shrink-0 ${
+                      s.seatNumber ? 'bg-primary-100 text-primary' : 'bg-primary-50 text-primary-lighter'
+                    }`}>
+                      {s.seatNumber || '—'}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-primary truncate flex items-center gap-1.5">
                         <User className="w-3.5 h-3.5 text-primary-lighter" />
                         {s.fullName}
                       </p>
-                      {s.mobile && (
-                        <p className="text-xs text-primary-lighter mt-0.5 flex items-center gap-1">
-                          <Phone className="w-3 h-3" /> {s.mobile}
-                        </p>
-                      )}
+                      <div className="flex items-center gap-2 mt-0.5">
+                        {s.mobile && (
+                          <p className="text-xs text-primary-lighter flex items-center gap-1">
+                            <Phone className="w-3 h-3" /> {s.mobile}
+                          </p>
+                        )}
+                        {!s.seatNumber && (
+                          <span className="text-xs text-orange-500">No seat assigned</span>
+                        )}
+                      </div>
                     </div>
                     <Link
                       href={`/admin/students/${s.studentId}`}

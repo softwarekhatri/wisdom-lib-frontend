@@ -61,6 +61,8 @@ export default function PaymentModal({ student, onClose, onSuccess }) {
 
   // form fields
   const [amount, setAmount]         = useState('');
+  const [numMonths, setNumMonths]   = useState(1);
+  const [monthsTouched, setMonthsTouched] = useState(false);
   const [mode, setMode]             = useState('cash');
   const [referenceNo, setRefNo]     = useState('');
   const [receivedDate, setDate]     = useState(TODAY);
@@ -71,6 +73,7 @@ export default function PaymentModal({ student, onClose, onSuccess }) {
   useEffect(() => {
     if (!student?._id) return;
     setFetchingHistory(true);
+    setMonthsTouched(false);
     api.get(`/payments/student/${student._id}`, { params: { page: 1 } })
       .then(({ data }) => {
         const { startYear: sy, startMonth: sm, paidUpToLabel: lbl, totalMonthsPaid: tmp } =
@@ -87,10 +90,25 @@ export default function PaymentModal({ student, onClose, onSuccess }) {
       });
   }, [student]);
 
-  // ── Derived calculations (live, no state needed) ──────────────
+  // ── Derived calculations ──────────────────────────────────────
   const fee             = student?.libraryFees || 0;
   const parsedAmt       = parseFloat(amount) || 0;
-  const numMonths       = fee > 0 ? Math.max(1, Math.floor(parsedAmt / fee)) : 1;
+  // Suggest floor(amount / fee) months (e.g. 700 at a 300 fee -> 2 months).
+  // The admin can still adjust manually for bundle/discounted pricing.
+  const suggestedMonths = fee > 0 && parsedAmt > 0 ? Math.max(1, Math.floor(parsedAmt / fee)) : 1;
+
+  // Re-suggests whenever the amount changes, even if the admin had manually
+  // adjusted months for a previous amount (see handleAmountChange below).
+  useEffect(() => {
+    if (!monthsTouched) setNumMonths(suggestedMonths);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [suggestedMonths, monthsTouched]);
+
+  const handleAmountChange = (e) => {
+    setAmount(e.target.value);
+    setMonthsTouched(false);
+  };
+
   const covered         = parsedAmt > 0 ? buildCoveredMonths(startYear, startMonth, numMonths) : [];
   const remainder       = fee > 0 ? parsedAmt - fee * numMonths : 0;
   const admBase         = student?.admissionDate ? new Date(student.admissionDate) : new Date();
@@ -98,6 +116,15 @@ export default function PaymentModal({ student, onClose, onSuccess }) {
   const newNextDue      = newPaidThrough ? addDays(newPaidThrough, 1) : null;
   const paidThroughStr  = newPaidThrough ? format(newPaidThrough, 'MMM d, yyyy') : null;
   const dueDateStr      = newNextDue ? format(newNextDue, 'MMMM d, yyyy') : null;
+
+  const adjustMonths = (delta) => {
+    setMonthsTouched(true);
+    setNumMonths(m => Math.max(1, m + delta));
+  };
+  const handleMonthsInput = (e) => {
+    setMonthsTouched(true);
+    setNumMonths(Math.max(1, parseInt(e.target.value) || 1));
+  };
 
   // ── Submit ────────────────────────────────────────────────────
   const handleSubmit = async (e) => {
@@ -185,7 +212,7 @@ export default function PaymentModal({ student, onClose, onSuccess }) {
                   required
                   min="1"
                   value={amount}
-                  onChange={e => setAmount(e.target.value)}
+                  onChange={handleAmountChange}
                   {...blockNumberSpin}
                   placeholder={fee > 0 ? `e.g. ${fee}` : '0'}
                   className="input-field pl-9 text-2xl font-bold tracking-tight"
@@ -203,6 +230,50 @@ export default function PaymentModal({ student, onClose, onSuccess }) {
                   )}
                 </p>
               )}
+            </div>
+
+            {/* ── Months to cover — editable for bundle/discounted pricing ── */}
+            <div>
+              <label className="block text-xs font-bold text-primary mb-2 uppercase tracking-wide">
+                Months to Cover
+              </label>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => adjustMonths(-1)}
+                  disabled={numMonths <= 1}
+                  className="w-10 h-10 rounded-xl border border-primary-200 text-primary font-bold text-lg hover:bg-primary-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  −
+                </button>
+                <input
+                  type="number"
+                  min="1"
+                  value={numMonths}
+                  onChange={handleMonthsInput}
+                  {...blockNumberSpin}
+                  className="input-field w-16 text-center font-bold"
+                />
+                <button
+                  type="button"
+                  onClick={() => adjustMonths(1)}
+                  className="w-10 h-10 rounded-xl border border-primary-200 text-primary font-bold text-lg hover:bg-primary-50 transition-colors"
+                >
+                  +
+                </button>
+                {monthsTouched && suggestedMonths !== numMonths && (
+                  <button
+                    type="button"
+                    onClick={() => { setMonthsTouched(false); setNumMonths(suggestedMonths); }}
+                    className="text-xs text-primary-lighter hover:text-primary underline underline-offset-2"
+                  >
+                    Reset to {suggestedMonths} (suggested)
+                  </button>
+                )}
+              </div>
+              <p className="text-xs text-primary-lighter mt-1.5">
+                Adjust manually for bundle/discounted pricing (e.g. ₹500 for 2 months).
+              </p>
             </div>
 
             {/* ── Live preview — shows once amount is entered ── */}

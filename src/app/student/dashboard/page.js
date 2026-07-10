@@ -242,7 +242,7 @@ function MembershipCard({ student, membershipDuration }) {
                     className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/10 text-white/70 text-xs"
                   >
                     <Armchair className="w-3 h-3" />
-                    Seat {a.seatNumber} · {a.batch}
+                    {a.batch}{a.seatNumber ? ` (${a.seatNumber})` : ''}
                   </span>
                 ))
               ) : (

@@ -78,7 +78,10 @@ export default function StudentDetailPage() {
   const handleSave = async (e) => {
     e.preventDefault();
 
-    const validRows = seatAssignments.filter(r => r.batch && r.seatNumber);
+    const validRows = seatAssignments.filter(r => r.batch);
+    if (validRows.length === 0) {
+      return toast.error('Select at least one batch');
+    }
     const batchesUsed = validRows.map(r => r.batch);
     if (new Set(batchesUsed).size !== batchesUsed.length) {
       return toast.error('Only one seat can be assigned per batch — remove the duplicate batch row');
@@ -269,12 +272,12 @@ export default function StudentDetailPage() {
                 })()}
                 <div className="flex items-start gap-2 text-primary-lighter">
                   <Armchair className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                  <span className="text-primary-lighter">Seats:</span>
+                  <span className="text-primary-lighter flex-shrink-0">Batches:</span>
                   {student.seatAssignments?.length ? (
-                    <div className="flex flex-wrap gap-1.5">
+                    <div className="flex flex-col gap-1">
                       {student.seatAssignments.map(a => (
-                        <span key={a.batch} className="px-2 py-0.5 rounded-full bg-primary-50 text-primary text-xs font-medium">
-                          {a.batch}: Seat {a.seatNumber}
+                        <span key={a.batch} className="text-primary font-medium">
+                          {a.batch}{a.seatNumber ? ` (${a.seatNumber})` : ''}
                         </span>
                       ))}
                     </div>
@@ -348,37 +351,41 @@ export default function StudentDetailPage() {
                 <div className="sm:col-span-2">
                   <div className="flex items-center justify-between mb-1.5">
                     <label className="block text-xs font-semibold text-primary flex items-center gap-1.5">
-                      <Armchair className="w-3.5 h-3.5" /> Seat Assignments
+                      <Armchair className="w-3.5 h-3.5" /> Batch(es) *
                     </label>
                     <button type="button" onClick={addSeatRow} className="flex items-center gap-1 text-xs font-semibold text-primary hover:text-primary-dark">
                       <Plus className="w-3.5 h-3.5" /> Add Batch
                     </button>
                   </div>
                   {seatAssignments.length === 0 ? (
-                    <p className="text-xs text-primary-lighter">No seat assigned yet — click &ldquo;Add Batch&rdquo; to assign one.</p>
+                    <p className="text-xs text-red-500">At least one batch is required — click &ldquo;Add Batch&rdquo; to assign one.</p>
                   ) : (
                     <div className="space-y-2">
-                      {seatAssignments.map((row, i) => (
+                      {seatAssignments.map((row, i) => {
+                        const otherBatches = seatAssignments.filter((_, idx) => idx !== i).map(r => r.batch);
+                        const availableBatches = BATCHES.filter(b => b === row.batch || !otherBatches.includes(b));
+                        return (
                         <div key={i} className="flex gap-2 items-center">
                           <select
                             value={row.batch}
                             onChange={e => updateSeatRow(i, 'batch', e.target.value)}
                             className="input-field flex-1 min-w-[160px] truncate"
                           >
-                            <option value="">Select batch</option>
-                            {BATCHES.map(b => <option key={b} value={b}>{b}</option>)}
+                            <option value="">Select batch *</option>
+                            {availableBatches.map(b => <option key={b} value={b}>{b}</option>)}
                           </select>
                           <input
                             value={row.seatNumber}
                             onChange={e => updateSeatRow(i, 'seatNumber', e.target.value)}
-                            placeholder="Seat no."
-                            className="input-field w-24 flex-shrink-0"
+                            placeholder="Seat no. (optional)"
+                            className="input-field w-32 flex-shrink-0"
                           />
                           <button type="button" onClick={() => removeSeatRow(i)} className="p-2.5 rounded-xl text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors flex-shrink-0">
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </div>

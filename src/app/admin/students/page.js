@@ -177,7 +177,7 @@ export default function StudentsPage() {
                 <div className="px-5 py-2 flex flex-wrap items-center gap-1.5 text-xs border-b border-primary-50">
                   {s.seatAssignments.map(a => (
                     <span key={a.batch} className="px-2 py-0.5 rounded-full bg-primary-50 text-primary font-medium">
-                      {a.batch}: Seat {a.seatNumber}
+                      {a.batch}{a.seatNumber ? ` (${a.seatNumber})` : ''}
                     </span>
                   ))}
                 </div>
