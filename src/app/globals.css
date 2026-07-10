@@ -139,27 +139,6 @@ body {
   animation: gradientShift 10s ease infinite;
 }
 
-/* ── Admin sidebar ── */
-.sidebar-link {
-  @apply flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200;
-  color: rgba(255,255,255,0.7);
-}
-.sidebar-link:hover {
-  background: rgba(255,255,255,0.1);
-  color: white;
-  transform: translateX(4px);
-}
-.sidebar-link.active {
-  background: rgba(201,161,94,0.25);
-  color: var(--gold-light);
-  border-left: 3px solid var(--gold);
-}
-
-/* ── Status badges ── */
-.badge-due { @apply bg-red-100 text-red-700 border border-red-200; }
-.badge-due-soon { @apply bg-orange-100 text-orange-700 border border-orange-200; }
-.badge-paid { @apply bg-green-100 text-green-700 border border-green-200; }
-
 /* ── Anniversary confetti ── */
 @keyframes confettiFall {
   0% { transform: translateY(-10px) rotate(0deg); opacity: 1; }
@@ -171,28 +150,55 @@ body {
   animation: confettiFall 2s ease-in forwards;
 }
 
-/* ── Input focus ── */
-.input-field {
-  @apply w-full px-4 py-3 rounded-xl border border-primary-200 bg-white text-primary placeholder-primary-lighter
-    focus:outline-none focus:ring-2 focus:ring-gold focus:border-gold transition-all duration-200;
-}
-.input-field:focus { box-shadow: 0 0 0 3px rgba(201,161,94,0.15); }
+/* Component classes that use @apply must live in the components layer —
+   otherwise they compile after the utilities layer and their own padding/
+   sizing utilities silently win over any utility override passed via
+   className (e.g. pl-12 on top of .input-field's own px-4). */
+@layer components {
+  /* ── Admin sidebar ── */
+  .sidebar-link {
+    @apply flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200;
+    color: rgba(255,255,255,0.7);
+  }
+  .sidebar-link:hover {
+    background: rgba(255,255,255,0.1);
+    color: white;
+    transform: translateX(4px);
+  }
+  .sidebar-link.active {
+    background: rgba(201,161,94,0.25);
+    color: var(--gold-light);
+    border-left: 3px solid var(--gold);
+  }
 
-/* ── Button primary ── */
-.btn-primary {
-  @apply px-6 py-3 bg-primary text-white rounded-xl font-medium transition-all duration-200
-    hover:bg-primary-dark active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
-  box-shadow: 0 4px 15px rgba(67,51,44,0.3);
-}
-.btn-primary:hover { box-shadow: 0 6px 20px rgba(67,51,44,0.4); }
+  /* ── Status badges ── */
+  .badge-due { @apply bg-red-100 text-red-700 border border-red-200; }
+  .badge-due-soon { @apply bg-orange-100 text-orange-700 border border-orange-200; }
+  .badge-paid { @apply bg-green-100 text-green-700 border border-green-200; }
 
-.btn-gold {
-  @apply px-6 py-3 rounded-xl font-medium transition-all duration-200 active:scale-95;
-  background: linear-gradient(135deg, var(--gold-dark), var(--gold), var(--gold-light));
-  color: white;
-  box-shadow: 0 4px 15px rgba(201,161,94,0.4);
+  /* ── Input focus ── */
+  .input-field {
+    @apply w-full px-4 py-3 rounded-xl border border-primary-200 bg-white text-primary placeholder-primary-lighter
+      focus:outline-none focus:ring-2 focus:ring-gold focus:border-gold transition-all duration-200;
+  }
+  .input-field:focus { box-shadow: 0 0 0 3px rgba(201,161,94,0.15); }
+
+  /* ── Button primary ── */
+  .btn-primary {
+    @apply px-6 py-3 bg-primary text-white rounded-xl font-medium transition-all duration-200
+      hover:bg-primary-dark active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
+    box-shadow: 0 4px 15px rgba(67,51,44,0.3);
+  }
+  .btn-primary:hover { box-shadow: 0 6px 20px rgba(67,51,44,0.4); }
+
+  .btn-gold {
+    @apply px-6 py-3 rounded-xl font-medium transition-all duration-200 active:scale-95;
+    background: linear-gradient(135deg, var(--gold-dark), var(--gold), var(--gold-light));
+    color: white;
+    box-shadow: 0 4px 15px rgba(201,161,94,0.4);
+  }
+  .btn-gold:hover { box-shadow: 0 6px 25px rgba(201,161,94,0.6); transform: translateY(-1px); }
 }
-.btn-gold:hover { box-shadow: 0 6px 25px rgba(201,161,94,0.6); transform: translateY(-1px); }
 
 /* ── Section reveal ── */
 .section-enter { opacity: 0; transform: translateY(40px); }

@@ -188,7 +188,10 @@ function MembershipCard({ student, membershipDuration }) {
             </div>
             <div className="flex items-center gap-1.5 text-white/80 font-mono text-sm font-semibold">
               {username}
-              <CopyButton value={username} className="text-gold/60 hover:text-gold" />
+              <CopyButton
+                value={username}
+                className="text-gold/60 hover:text-gold"
+              />
             </div>
           </div>
         </div>
@@ -383,10 +386,7 @@ function PaymentStatusCard({ payStatus, libraryFees }) {
           {(isOverdue || isDueSoon) && (
             <div className="mt-3 pt-3 border-t border-white/10 text-xs text-white/60 flex items-center gap-1.5">
               <span>📍</span>
-              <span>
-                Payments accepted at the library office only &nbsp;·&nbsp; +91
-                98765 43210
-              </span>
+              <span>Payments accepted at the library office only.</span>
             </div>
           )}
         </div>
