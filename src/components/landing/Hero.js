@@ -1,8 +1,8 @@
-'use client';
-import { useRef, useEffect, useState } from 'react';
-import { motion, useScroll, useTransform, useMotionValue, useSpring } from 'framer-motion';
-import Link from 'next/link';
-import { ArrowRight, BookOpen, Users, Star, Sparkles } from 'lucide-react';
+"use client";
+import { useRef, useEffect, useState } from "react";
+import { motion, useScroll, useTransform } from "framer-motion";
+import Link from "next/link";
+import { ArrowRight, BookOpen, Sparkles, Phone } from "lucide-react";
 
 const PARTICLES = Array.from({ length: 25 }, (_, i) => ({
   id: i,
@@ -13,39 +13,93 @@ const PARTICLES = Array.from({ length: 25 }, (_, i) => ({
   opacity: Math.random() * 0.4 + 0.1,
 }));
 
-const WORDS = ['Knowledge', 'Wisdom', 'Excellence', 'Growth', 'Success'];
+const STAR_CLIP =
+  "polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)";
 
-function TypewriterText() {
-  const [index, setIndex] = useState(0);
-  const [displayed, setDisplayed] = useState('');
-  const [deleting, setDeleting] = useState(false);
+function OfferHighlight() {
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.6, delay: 0.35 }}
+      className="inline-flex items-center gap-3 mb-4 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-gold-dark via-gold to-gold-light shadow-[0_8px_24px_rgba(201,161,94,0.35)]"
+    >
+      <span className="font-display font-bold text-primary-dark text-sm sm:text-lg leading-snug">
+        Pay for 3 Months &amp; Get 1 Month
+      </span>
+
+      <motion.span
+        animate={{ rotate: [-8, 4, -8], scale: [1, 1.08, 1] }}
+        transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+        className="relative inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 shrink-0"
+      >
+        <span
+          className="absolute inset-0 bg-red-600"
+          style={{ clipPath: STAR_CLIP }}
+        />
+        <span className="relative font-display font-black text-white text-[30px] sm:text-sm uppercase tracking-wide">
+          Free
+        </span>
+      </motion.span>
+    </motion.div>
+  );
+}
+
+const OFFER_DEADLINE = new Date("2026-07-21T00:00:00");
+
+function getTimeLeft() {
+  const diff = OFFER_DEADLINE.getTime() - Date.now();
+  if (diff <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+  return {
+    days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+    hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
+    minutes: Math.floor((diff / (1000 * 60)) % 60),
+    seconds: Math.floor((diff / 1000) % 60),
+  };
+}
+
+function CountdownTimer() {
+  const [timeLeft, setTimeLeft] = useState(null);
 
   useEffect(() => {
-    const word = WORDS[index];
-    const timeout = setTimeout(() => {
-      if (!deleting) {
-        if (displayed.length < word.length) {
-          setDisplayed(word.slice(0, displayed.length + 1));
-        } else {
-          setTimeout(() => setDeleting(true), 1800);
-        }
-      } else {
-        if (displayed.length > 0) {
-          setDisplayed(displayed.slice(0, -1));
-        } else {
-          setDeleting(false);
-          setIndex((i) => (i + 1) % WORDS.length);
-        }
-      }
-    }, deleting ? 60 : 110);
-    return () => clearTimeout(timeout);
-  }, [displayed, deleting, index]);
+    setTimeLeft(getTimeLeft());
+    const timer = setInterval(() => setTimeLeft(getTimeLeft()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const units = [
+    { label: "Days", value: timeLeft?.days },
+    { label: "Hours", value: timeLeft?.hours },
+    { label: "Minutes", value: timeLeft?.minutes },
+    { label: "Seconds", value: timeLeft?.seconds },
+  ];
 
   return (
-    <span className="gradient-text inline-block min-w-[200px]">
-      {displayed}
-      <span className="animate-pulse">|</span>
-    </span>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6, delay: 0.4 }}
+      className="mb-6"
+    >
+      <p className="text-white font-display font-bold text-sm sm:text-base mb-2">
+        ⏰ Hurry! <span className="text-gold">Offer Ends Soon</span>
+      </p>
+      <div className="grid grid-cols-4 gap-3 max-w-sm">
+        {units.map((u) => (
+          <div
+            key={u.label}
+            className="rounded-xl bg-primary-dark/80 border border-gold/30 backdrop-blur-sm text-white py-3 text-center shadow-[0_8px_24px_rgba(0,0,0,0.45)]"
+          >
+            <div className="font-display font-black text-xl sm:text-2xl tabular-nums text-gold">
+              {u.value === undefined ? "--" : String(u.value).padStart(2, "0")}
+            </div>
+            <div className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mt-0.5 text-white/60">
+              {u.label}
+            </div>
+          </div>
+        ))}
+      </div>
+    </motion.div>
   );
 }
 
@@ -54,13 +108,17 @@ function Book3D() {
     <div className="relative w-44 h-56 sm:w-52 sm:h-64 select-none">
       <div
         className="book-cover relative w-full h-full rounded-r-lg rounded-l-sm flex flex-col items-center justify-center p-4"
-        style={{ transformOrigin: 'center center' }}
+        style={{ transformOrigin: "center center" }}
       >
         <div className="book-spine" />
         <div className="book-page-lines" />
         <BookOpen className="w-12 h-12 text-gold mb-3 drop-shadow-lg" />
-        <div className="text-gold font-display font-bold text-lg text-center leading-tight">Wisdom</div>
-        <div className="text-gold/70 text-xs tracking-widest uppercase mt-1">Library</div>
+        <div className="text-gold font-display font-bold text-lg text-center leading-tight">
+          Wisdom
+        </div>
+        <div className="text-gold/70 text-xs tracking-widest uppercase mt-1">
+          Library
+        </div>
         <div className="absolute inset-0 rounded-r-lg rounded-l-sm bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
         {/* Gold ornament lines */}
         <div className="absolute top-3 left-3 right-3 h-px bg-gradient-to-r from-transparent via-gold/40 to-transparent" />
@@ -74,8 +132,11 @@ function Book3D() {
 
 export default function Hero() {
   const sectionRef = useRef(null);
-  const { scrollYProgress } = useScroll({ target: sectionRef, offset: ['start start', 'end start'] });
-  const y = useTransform(scrollYProgress, [0, 1], ['0%', '40%']);
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start start", "end start"],
+  });
+  const y = useTransform(scrollYProgress, [0, 1], ["0%", "40%"]);
   const opacity = useTransform(scrollYProgress, [0, 0.7], [1, 0]);
 
   return (
@@ -91,8 +152,9 @@ export default function Hero() {
       <div
         className="absolute inset-0 opacity-5"
         style={{
-          backgroundImage: 'linear-gradient(rgba(201,161,94,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(201,161,94,0.3) 1px, transparent 1px)',
-          backgroundSize: '60px 60px',
+          backgroundImage:
+            "linear-gradient(rgba(201,161,94,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(201,161,94,0.3) 1px, transparent 1px)",
+          backgroundSize: "60px 60px",
         }}
       />
 
@@ -101,24 +163,41 @@ export default function Hero() {
         <motion.div
           key={p.id}
           className="absolute rounded-full bg-gold pointer-events-none"
-          style={{ width: p.size, height: p.size, left: `${p.x}%`, bottom: 0, opacity: p.opacity }}
+          style={{
+            width: p.size,
+            height: p.size,
+            left: `${p.x}%`,
+            bottom: 0,
+            opacity: p.opacity,
+          }}
           animate={{ y: [0, -900], opacity: [0, p.opacity, p.opacity, 0] }}
-          transition={{ duration: p.duration, repeat: Infinity, delay: p.delay, ease: 'linear' }}
+          transition={{
+            duration: p.duration,
+            repeat: Infinity,
+            delay: p.delay,
+            ease: "linear",
+          }}
         />
       ))}
 
       {/* Floating decorative orbs */}
       <motion.div
         className="absolute top-1/4 left-10 w-72 h-72 rounded-full blur-3xl pointer-events-none"
-        style={{ background: 'radial-gradient(circle, rgba(201,161,94,0.15), transparent)' }}
+        style={{
+          background:
+            "radial-gradient(circle, rgba(201,161,94,0.15), transparent)",
+        }}
         animate={{ scale: [1, 1.2, 1], x: [0, 20, 0] }}
-        transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
+        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
       />
       <motion.div
         className="absolute bottom-1/4 right-10 w-96 h-96 rounded-full blur-3xl pointer-events-none"
-        style={{ background: 'radial-gradient(circle, rgba(67,51,44,0.4), transparent)' }}
+        style={{
+          background:
+            "radial-gradient(circle, rgba(67,51,44,0.4), transparent)",
+        }}
         animate={{ scale: [1.2, 1, 1.2], x: [0, -20, 0] }}
-        transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
+        transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
       />
 
       {/* Main content */}
@@ -128,15 +207,30 @@ export default function Hero() {
       >
         {/* Left — Text */}
         <div className="text-left">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass mb-6 border border-gold/20"
-          >
-            <Sparkles className="w-4 h-4 text-gold" />
-            <span className="text-gold text-xs font-semibold tracking-widest uppercase">Premium Library Experience</span>
-          </motion.div>
+          <div className="flex flex-wrap items-center gap-3 mb-6">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass border border-gold/20"
+            >
+              <Sparkles className="w-4 h-4 text-gold" />
+              <span className="text-gold text-xs font-semibold tracking-widest uppercase">
+                Premium Library Experience
+              </span>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-red-400/40 bg-red-600"
+            >
+              <span className="text-white text-xs font-semibold tracking-widest uppercase">
+                LIMITED TIME OFFER
+              </span>
+            </motion.div>
+          </div>
 
           <motion.h1
             initial={{ opacity: 0, y: 30 }}
@@ -144,21 +238,26 @@ export default function Hero() {
             transition={{ duration: 0.8, delay: 0.3 }}
             className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight mb-4"
           >
-            Your Journey to
+            🎉 Grand Opening
             <br />
-            <TypewriterText />
-            <br />
-            <span className="text-white/90">Starts Here</span>
+            <span className="text-white/90">21st July 2026</span>
           </motion.h1>
+
+          <div>
+            <OfferHighlight />
+          </div>
+
+          <CountdownTimer />
 
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.5 }}
-            className="text-white/70 text-lg leading-relaxed mb-8 max-w-lg"
+            className="text-white/70 text-sm leading-relaxed mb-8 max-w-lg"
           >
-            Step into a world where every page opens new horizons. Wisdom Library — your sanctuary of knowledge,
-            community, and lifelong learning in the heart of the city.
+            Join Rafiganj's Premium Fully Air Conditioned Library with modern
+            facilities designed for students, professionals and competitive exam
+            aspirants.
           </motion.p>
 
           <motion.div
@@ -171,41 +270,44 @@ export default function Hero() {
               href="#contact"
               className="btn-gold flex items-center gap-2 text-sm"
             >
-              Join Our Family <ArrowRight className="w-4 h-4" />
+              Take Admission <ArrowRight className="w-4 h-4" />
             </a>
             <Link
-              href="/login"
+              href="tel:+917209703947"
               className="flex items-center gap-2 px-6 py-3 rounded-xl border border-white/20 text-white text-sm font-medium hover:bg-white/10 transition-all"
             >
-              Member Portal
+              <Phone className="w-4 h-4" />
+              Call now
             </Link>
           </motion.div>
 
           {/* Quick stats */}
-          <motion.div
+          {/* <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.8, delay: 1 }}
             className="flex gap-8 mt-10"
           >
             {[
-              { icon: Users, label: 'Members', value: '500+' },
-              { icon: BookOpen, label: 'Books', value: '10K+' },
-              { icon: Star, label: 'Years', value: '15+' },
+              { icon: Users, label: "Members", value: "500+" },
+              { icon: BookOpen, label: "Books", value: "10K+" },
+              { icon: Star, label: "Years", value: "15+" },
             ].map(({ icon: Icon, label, value }) => (
               <div key={label} className="text-center">
-                <div className="text-gold font-bold text-2xl font-display">{value}</div>
+                <div className="text-gold font-bold text-2xl font-display">
+                  {value}
+                </div>
                 <div className="text-white/50 text-xs mt-1">{label}</div>
               </div>
             ))}
-          </motion.div>
+          </motion.div> */}
         </div>
 
         {/* Right — 3D Book */}
         <motion.div
           initial={{ opacity: 0, x: 60 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 1, delay: 0.4, ease: 'easeOut' }}
+          transition={{ duration: 1, delay: 0.4, ease: "easeOut" }}
           className="flex items-center justify-center book-3d"
         >
           <div className="relative">
@@ -215,14 +317,19 @@ export default function Hero() {
             <motion.div
               className="absolute -top-6 -right-6 glass px-3 py-2 rounded-xl border border-gold/20 text-xs text-gold font-semibold"
               animate={{ y: [0, -8, 0] }}
-              transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
             >
               📚 10K+ Books
             </motion.div>
             <motion.div
               className="absolute -bottom-4 -left-8 glass px-3 py-2 rounded-xl border border-white/10 text-xs text-white/80 font-medium"
               animate={{ y: [0, 8, 0] }}
-              transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
+              transition={{
+                duration: 5,
+                repeat: Infinity,
+                ease: "easeInOut",
+                delay: 1,
+              }}
             >
               ⭐ 500+ Members
             </motion.div>
@@ -237,11 +344,13 @@ export default function Hero() {
         transition={{ delay: 1.5 }}
         className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
       >
-        <span className="text-white/40 text-xs tracking-widest uppercase">Scroll</span>
+        <span className="text-white/40 text-xs tracking-widest uppercase">
+          Scroll
+        </span>
         <motion.div
           className="w-0.5 h-12 bg-gradient-to-b from-gold/60 to-transparent"
-          animate={{ scaleY: [0, 1, 0], transformOrigin: 'top' }}
-          transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+          animate={{ scaleY: [0, 1, 0], transformOrigin: "top" }}
+          transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
         />
       </motion.div>
     </section>

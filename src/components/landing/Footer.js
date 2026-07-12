@@ -108,6 +108,15 @@ export default function Footer() {
                 <span>feedback@wisdomlibrary.in</span>
               </li> */}
               <li className="flex items-start gap-2 text-white/60 text-sm">
+                <Mail className="w-4 h-4 mt-0.5 text-gold flex-shrink-0" />
+                <a
+                  href="mailto:wisdomlibraryrfg@gmail.com"
+                  className="hover:text-gold transition-colors"
+                >
+                  wisdomlibraryrfg@gmail.com
+                </a>
+              </li>
+              <li className="flex items-start gap-2 text-white/60 text-sm">
                 <MapPin className="w-4 h-4 mt-0.5 text-gold flex-shrink-0" />
                 <span>Raja Bagicha, Rafiganj, nearby Lakshwadeep School</span>
               </li>

@@ -32,8 +32,13 @@ const CONTACT_INFO = [
     href: "https://wa.me/917209703947",
     color: "bg-green-100 text-green-700",
   },
-  // { icon: Mail, label: 'Email', value: 'info@wisdomlibrary.in', href: 'mailto:info@wisdomlibrary.in', color: 'bg-blue-100 text-blue-700' },
-  // { icon: AlertCircle, label: 'Complaints / Feedback', value: 'feedback@wisdomlibrary.in', href: 'mailto:feedback@wisdomlibrary.in', color: 'bg-orange-100 text-orange-700' },
+  {
+    icon: Mail,
+    label: 'Email',
+    value: 'wisdomlibraryrfg@gmail.com',
+    href: 'mailto:wisdomlibraryrfg@gmail.com',
+    color: 'bg-blue-100 text-blue-700',
+  },
   {
     icon: MapPin,
     label: "Location",
