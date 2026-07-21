@@ -136,7 +136,7 @@ export const getAdmissionWhatsAppUrl = (student) => {
     `*Student ID / Username:* ${studentId}\n` +
     `*Password:* 123456\n\n` +
     `You can login to our website to view your details and change your password:\n` +
-    `🌐 *wisdom-lib.vercel.app*\n\n` +
+    `*https://wisdom-lib.vercel.app*\n\n` +
     `Thank you for joining us!\n` +
     `*Wisdom Library*`;
 
