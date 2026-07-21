@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '@/lib/api';
-import { formatDate, formatCurrency, getPaymentStatus, MONTH_NAMES, photoUrl, getWhatsAppUrl, getAdmissionWhatsAppUrl, BATCHES, blockNumberSpin } from '@/lib/utils';
+import { formatDate, formatCurrency, getPaymentStatus, MONTH_NAMES, photoUrl, getWhatsAppUrl, getAdmissionWhatsAppUrl, BATCHES, SHIFT_FEES, blockNumberSpin } from '@/lib/utils';
 import StudentAvatar from '@/components/StudentAvatar';
 
 const WhatsAppIcon = ({ size = 16 }) => (
@@ -44,6 +44,7 @@ export default function StudentDetailPage() {
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
   const [showCamera, setShowCamera] = useState(false);
+  const [feeTouched, setFeeTouched] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deletingStudent, setDeletingStudent] = useState(false);
   const [pendingDeletePayment, setPendingDeletePayment] = useState(null);
@@ -69,6 +70,14 @@ export default function StudentDetailPage() {
     } catch { toast.error('Failed to load student'); }
     setLoading(false);
   };
+
+  // Auto-suggest libraryFees based on batch count when editing, unless admin changed it manually.
+  useEffect(() => {
+    if (!editing || feeTouched) return;
+    const count = seatAssignments.filter((r) => r.batch).length;
+    const standard = SHIFT_FEES[count];
+    if (standard) setForm((f) => ({ ...f, libraryFees: standard }));
+  }, [seatAssignments, editing, feeTouched]);
 
   const addSeatRow = () => setSeatAssignments(rows => [...rows, { batch: '', seatNumber: '' }]);
   const removeSeatRow = (index) => setSeatAssignments(rows => rows.filter((_, i) => i !== index));
@@ -198,7 +207,7 @@ export default function StudentDetailPage() {
             </>
           ) : (
             <>
-              <button onClick={() => setEditing(false)} className="flex items-center gap-2 px-4 py-2 rounded-xl border border-primary-200 text-primary text-sm hover:bg-primary-50">
+              <button onClick={() => { setEditing(false); setFeeTouched(false); }} className="flex items-center gap-2 px-4 py-2 rounded-xl border border-primary-200 text-primary text-sm hover:bg-primary-50">
                 <X size={16} />
                 Cancel
               </button>
@@ -254,7 +263,7 @@ export default function StudentDetailPage() {
                 {[
                   { icon: Hash, label: 'Username', value: student.username || '—', copyable: true },
                   { icon: Calendar, label: 'Joined', value: formatDate(student.admissionDate) },
-                  { icon: IndianRupee, label: 'Fees', value: `${formatCurrency(student.libraryFees)}/mo` },
+                  { icon: IndianRupee, label: 'Fees', value: `${formatCurrency(student.libraryFees)}/mo${SHIFT_FEES[student.seatAssignments?.length] && SHIFT_FEES[student.seatAssignments?.length] !== student.libraryFees ? ` (standard: ${formatCurrency(SHIFT_FEES[student.seatAssignments?.length])})` : ''}` },
                   { icon: Phone, label: 'Mobile', value: student.mobile || '—' },
                   { icon: Phone, label: 'WhatsApp', value: student.whatsappNumber || student.mobile || '—' },
                   { icon: Mail, label: 'Email', value: student.email || '—' },
@@ -301,7 +310,9 @@ export default function StudentDetailPage() {
 
               {/* WhatsApp buttons */}
               {(() => {
-                const waUrl = getWhatsAppUrl(student, student.nextDueDate, student.libraryFees);
+                const shiftCount = student.seatAssignments?.length || 1;
+                const effectiveFee = SHIFT_FEES[shiftCount] || student.libraryFees;
+                const waUrl = getWhatsAppUrl(student, student.nextDueDate, effectiveFee);
                 const admUrl = getAdmissionWhatsAppUrl(student);
                 return (waUrl || admUrl) ? (
                   <div className="mt-3 space-y-2">
@@ -370,7 +381,27 @@ export default function StudentDetailPage() {
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-primary mb-1.5">Monthly Fees (₹)</label>
-                  <input type="number" min="0" value={form.libraryFees || 0} onChange={e => setForm(f => ({ ...f, libraryFees: e.target.value }))} {...blockNumberSpin} className="input-field" />
+                  <input type="number" min="0" value={form.libraryFees || 0}
+                    onChange={e => { setForm(f => ({ ...f, libraryFees: e.target.value })); setFeeTouched(true); }}
+                    {...blockNumberSpin} className="input-field" />
+                  {(() => {
+                    const count = seatAssignments.filter((r) => r.batch).length;
+                    const standard = SHIFT_FEES[count];
+                    if (!count || !standard) return null;
+                    const isCustom = feeTouched && parseFloat(form.libraryFees) !== standard;
+                    return (
+                      <p className="text-xs text-primary-lighter mt-1">
+                        Standard for {count} shift{count !== 1 ? 's' : ''}: <strong className="text-primary">{formatCurrency(standard)}</strong>
+                        {isCustom && (
+                          <button type="button"
+                            onClick={() => { setForm(f => ({ ...f, libraryFees: standard })); setFeeTouched(false); }}
+                            className="ml-2 text-primary underline underline-offset-2">
+                            Reset to standard
+                          </button>
+                        )}
+                      </p>
+                    );
+                  })()}
                 </div>
                 <div className="sm:col-span-2">
                   <div className="flex items-center justify-between mb-1.5">

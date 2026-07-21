@@ -31,6 +31,7 @@ import {
   MONTH_NAMES,
   formatCurrency,
   BATCHES,
+  SHIFT_FEES,
   blockNumberSpin,
 } from "@/lib/utils";
 import { addMonths, addDays, format } from "date-fns";
@@ -73,7 +74,17 @@ export default function AdmissionModal({ onClose, onSuccess }) {
     password: "",
   });
   const [seatAssignments, setSeatAssignments] = useState([]);
+  const [feeTouched, setFeeTouched] = useState(false);
   const [whatsappSameAsMobile, setWhatsappSameAsMobile] = useState(false);
+
+  // Auto-fill libraryFees from standard rate when batch count changes,
+  // unless admin has manually overridden the fee field.
+  useEffect(() => {
+    if (feeTouched) return;
+    const count = seatAssignments.filter((r) => r.batch).length;
+    const standard = SHIFT_FEES[count];
+    if (standard) setStudentForm((f) => ({ ...f, libraryFees: String(standard) }));
+  }, [seatAssignments, feeTouched]);
 
   const addSeatRow = () =>
     setSeatAssignments((rows) => [...rows, { batch: "", seatNumber: "" }]);
@@ -426,11 +437,29 @@ export default function AdmissionModal({ onClose, onSuccess }) {
                     required
                     min="0"
                     value={studentForm.libraryFees}
-                    onChange={sf("libraryFees")}
+                    onChange={(e) => { sf("libraryFees")(e); setFeeTouched(true); }}
                     {...blockNumberSpin}
                     placeholder="e.g. 300"
                     className="input-field"
                   />
+                  {(() => {
+                    const count = validBatchRows.length;
+                    const standard = SHIFT_FEES[count];
+                    if (!count || !standard) return null;
+                    const isCustom = feeTouched && parseFloat(studentForm.libraryFees) !== standard;
+                    return (
+                      <p className="text-xs text-primary-lighter mt-1">
+                        Standard for {count} shift{count !== 1 ? "s" : ""}: <strong className="text-primary">{formatCurrency(standard)}</strong>
+                        {isCustom && (
+                          <button type="button"
+                            onClick={() => { setStudentForm((f) => ({ ...f, libraryFees: String(standard) })); setFeeTouched(false); }}
+                            className="ml-2 text-primary underline underline-offset-2">
+                            Reset to standard
+                          </button>
+                        )}
+                      </p>
+                    );
+                  })()}
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-primary mb-1.5">

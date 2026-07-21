@@ -183,6 +183,10 @@ export const photoUrl = (photo) => {
   return /^https?:\/\//i.test(photo) ? photo : `${apiBase}${photo}`;
 };
 
+// Standard monthly fees by number of shifts. Index = shift count.
+// Used across admission, edit, and payment forms to auto-suggest fees.
+export const SHIFT_FEES = { 1: 300, 2: 500, 3: 750, 4: 1000 };
+
 // Keep in sync with backend/src/utils/batches.js — add more here to extend.
 export const BATCHES = [
   "6 AM - 10 AM",

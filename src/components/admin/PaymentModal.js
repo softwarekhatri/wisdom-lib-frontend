@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, IndianRupee, Banknote, CreditCard, CheckCircle, Loader2, CalendarCheck, ArrowRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '@/lib/api';
-import { MONTH_NAMES, formatCurrency, photoUrl, blockNumberSpin } from '@/lib/utils';
+import { MONTH_NAMES, formatCurrency, SHIFT_FEES, photoUrl, blockNumberSpin } from '@/lib/utils';
 import StudentAvatar from '@/components/StudentAvatar';
 import { addMonths, addDays, format, differenceInDays } from 'date-fns';
 
@@ -92,6 +92,8 @@ export default function PaymentModal({ student, onClose, onSuccess }) {
   }, [student]);
 
   // ── Derived calculations ──────────────────────────────────────
+  const shiftCount      = student?.seatAssignments?.length || 1;
+  const standardFee     = SHIFT_FEES[shiftCount] || 0;
   const fee             = student?.libraryFees || 0;
   const parsedAmt       = parseFloat(amount) || 0;
   // Suggest floor(amount / fee) months (e.g. 700 at a 300 fee -> 2 months).
@@ -222,17 +224,37 @@ export default function PaymentModal({ student, onClose, onSuccess }) {
                   style={{ fontSize: '1.4rem' }}
                 />
               </div>
-              {fee > 0 && (
-                <p className="text-xs text-primary-lighter mt-1.5">
-                  Monthly fee: <strong className="text-primary">{formatCurrency(fee)}</strong>
-                  {amount && parsedAmt > 0 && (
-                    <span className="ml-2 text-primary-lighter">
-                      → {formatCurrency(fee)} × {numMonths} = {formatCurrency(fee * numMonths)}
-                      {remainder > 0 && <span className="text-orange-500"> (+{formatCurrency(remainder)} extra)</span>}
+              {/* Shift-based fee hint */}
+              <div className="mt-1.5 space-y-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="inline-flex items-center gap-1 text-xs bg-primary-50 border border-primary-100 text-primary font-semibold px-2 py-0.5 rounded-full">
+                    {shiftCount} shift{shiftCount !== 1 ? 's' : ''} · {formatCurrency(standardFee)}/mo standard
+                  </span>
+                  {standardFee > 0 && (
+                    <button type="button"
+                      onClick={() => { setAmount(String(standardFee)); setMonthsTouched(false); }}
+                      className="text-xs text-primary underline underline-offset-2 hover:text-primary-dark">
+                      Fill ₹{standardFee}
+                    </button>
+                  )}
+                  {fee > 0 && fee !== standardFee && (
+                    <span className="text-xs text-orange-500">
+                      Saved rate: {formatCurrency(fee)} — may be outdated
+                      <button type="button"
+                        onClick={() => { setAmount(String(fee)); setMonthsTouched(false); }}
+                        className="ml-1 underline underline-offset-2 hover:text-orange-700">
+                        Fill
+                      </button>
                     </span>
                   )}
-                </p>
-              )}
+                </div>
+                {fee > 0 && parsedAmt > 0 && (
+                  <p className="text-xs text-primary-lighter">
+                    {formatCurrency(fee)} × {numMonths} = {formatCurrency(fee * numMonths)}
+                    {remainder > 0 && <span className="text-orange-500"> (+{formatCurrency(remainder)} extra)</span>}
+                  </p>
+                )}
+              </div>
             </div>
 
             {/* ── Months to cover — editable for bundle/discounted pricing ── */}
