@@ -129,7 +129,7 @@ export const getAdmissionWhatsAppUrl = (student) => {
   const studentId = student.mobile || student.username || student._id;
 
   const msg =
-    `Hi ${student.fullName}! 🎉\n\n` +
+    `Hi ${student.fullName}!\n\n` +
     `Welcome to *Wisdom Library*!\n\n` +
     `Your admission is successful. We're excited to have you with us!\n\n` +
     `*Your Login Details:*\n` +
@@ -184,7 +184,12 @@ export const photoUrl = (photo) => {
 };
 
 // Keep in sync with backend/src/utils/batches.js — add more here to extend.
-export const BATCHES = ["6 AM - 10 AM", "10 AM - 2 PM", "2 PM - 6 PM", "6 PM - 10 PM"];
+export const BATCHES = [
+  "6 AM - 10 AM",
+  "10 AM - 2 PM",
+  "2 PM - 6 PM",
+  "6 PM - 10 PM",
+];
 
 // Attach to number inputs to stop mouse-wheel scroll and Up/Down arrow keys
 // from silently changing the value — easy to trigger by accident.
