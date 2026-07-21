@@ -119,6 +119,30 @@ export const generateMonthOptions = (startYear, startMonth, count = 12) => {
   return options;
 };
 
+export const getAdmissionWhatsAppUrl = (student) => {
+  const rawPhone = student.whatsappNumber || student.mobile;
+  if (!rawPhone) return null;
+  let num = rawPhone.replace(/\D/g, "");
+  if (num.length === 10) num = "91" + num;
+  else if (num.startsWith("0") && num.length === 11) num = "91" + num.slice(1);
+
+  const studentId = student.mobile || student.username || student._id;
+
+  const msg =
+    `Hi ${student.fullName}! 🎉\n\n` +
+    `Welcome to *Wisdom Library*!\n\n` +
+    `Your admission is successful. We're excited to have you with us!\n\n` +
+    `*Your Login Details:*\n` +
+    `*Student ID / Username:* ${studentId}\n` +
+    `*Password:* 123456\n\n` +
+    `You can login to our website to view your details and change your password:\n` +
+    `🌐 *wisdom-lib.vercel.app*\n\n` +
+    `Thank you for joining us!\n` +
+    `*Wisdom Library*`;
+
+  return `https://wa.me/${num}?text=${encodeURIComponent(msg)}`;
+};
+
 export const getWhatsAppUrl = (student, nextDueDate, libraryFees) => {
   const rawPhone = student.whatsappNumber || student.mobile;
   if (!rawPhone) return null;

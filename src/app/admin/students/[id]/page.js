@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '@/lib/api';
-import { formatDate, formatCurrency, getPaymentStatus, MONTH_NAMES, photoUrl, getWhatsAppUrl, BATCHES, blockNumberSpin } from '@/lib/utils';
+import { formatDate, formatCurrency, getPaymentStatus, MONTH_NAMES, photoUrl, getWhatsAppUrl, getAdmissionWhatsAppUrl, BATCHES, blockNumberSpin } from '@/lib/utils';
 
 const WhatsAppIcon = ({ size = 16 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
@@ -287,15 +287,27 @@ export default function StudentDetailPage() {
                 </div>
               </div>
 
-              {/* WhatsApp Reminder button */}
+              {/* WhatsApp buttons */}
               {(() => {
                 const waUrl = getWhatsAppUrl(student, student.nextDueDate, student.libraryFees);
-                return waUrl ? (
-                  <a href={waUrl} target="_blank" rel="noopener noreferrer"
-                    className="w-full mt-3 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-green-500 text-white text-sm font-semibold hover:bg-green-600 transition-colors shadow-sm">
-                    <WhatsAppIcon size={15} />
-                    Send Fee Reminder
-                  </a>
+                const admUrl = getAdmissionWhatsAppUrl(student);
+                return (waUrl || admUrl) ? (
+                  <div className="mt-3 space-y-2">
+                    {waUrl && (
+                      <a href={waUrl} target="_blank" rel="noopener noreferrer"
+                        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-green-500 text-white text-sm font-semibold hover:bg-green-600 transition-colors shadow-sm">
+                        <WhatsAppIcon size={15} />
+                        Send Fee Reminder
+                      </a>
+                    )}
+                    {admUrl && (
+                      <a href={admUrl} target="_blank" rel="noopener noreferrer"
+                        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 transition-colors shadow-sm">
+                        <WhatsAppIcon size={15} />
+                        Send Admission Successful
+                      </a>
+                    )}
+                  </div>
                 ) : null;
               })()}
 
