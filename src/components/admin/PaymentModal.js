@@ -67,6 +67,7 @@ export default function PaymentModal({ student, onClose, onSuccess }) {
   const [mode, setMode]             = useState('cash');
   const [referenceNo, setRefNo]     = useState('');
   const [receivedDate, setDate]     = useState(TODAY);
+  const [updateFee, setUpdateFee]   = useState(false);
 
   const amountRef = useRef(null);
 
@@ -94,11 +95,19 @@ export default function PaymentModal({ student, onClose, onSuccess }) {
   // ── Derived calculations ──────────────────────────────────────
   const shiftCount      = student?.seatAssignments?.length || 1;
   const standardFee     = SHIFT_FEES[shiftCount] || 0;
-  const fee             = student?.libraryFees || 0;
+  const savedFee        = student?.libraryFees || 0;
+  // Use shift-based standard as the effective rate; fall back to saved fee.
+  // This keeps month math correct even when libraryFees is stale after a shift change.
+  const fee             = standardFee || savedFee;
+  const feeIsStale      = standardFee > 0 && savedFee !== standardFee;
   const parsedAmt       = parseFloat(amount) || 0;
-  // Suggest floor(amount / fee) months (e.g. 700 at a 300 fee -> 2 months).
-  // The admin can still adjust manually for bundle/discounted pricing.
   const suggestedMonths = fee > 0 && parsedAmt > 0 ? Math.max(1, Math.floor(parsedAmt / fee)) : 1;
+  const remainder       = fee > 0 ? parsedAmt - fee * numMonths : 0;
+
+  // Auto-check "update fee" whenever the saved fee is stale vs current shifts.
+  useEffect(() => {
+    setUpdateFee(feeIsStale);
+  }, [feeIsStale]);
 
   // Re-suggests whenever the amount changes, even if the admin had manually
   // adjusted months for a previous amount (see handleAmountChange below).
@@ -112,8 +121,7 @@ export default function PaymentModal({ student, onClose, onSuccess }) {
     setMonthsTouched(false);
   };
 
-  const covered         = parsedAmt > 0 ? buildCoveredMonths(startYear, startMonth, numMonths) : [];
-  const remainder       = fee > 0 ? parsedAmt - fee * numMonths : 0;
+  const covered = parsedAmt > 0 ? buildCoveredMonths(startYear, startMonth, numMonths) : [];
   const admBase         = student?.admissionDate ? new Date(student.admissionDate) : new Date();
   const newPaidThrough  = parsedAmt > 0 ? addMonths(admBase, totalMonthsPaid + numMonths) : null;
   const newNextDue      = newPaidThrough ? addDays(newPaidThrough, 1) : null;
@@ -145,6 +153,9 @@ export default function PaymentModal({ student, onClose, onSuccess }) {
         startMonth,
         numMonths,
       });
+      if (updateFee && standardFee > 0) {
+        await api.put(`/students/${student._id}`, { libraryFees: standardFee });
+      }
       toast.success('Payment recorded!');
       onSuccess();
     } catch (err) {
@@ -225,27 +236,17 @@ export default function PaymentModal({ student, onClose, onSuccess }) {
                 />
               </div>
               {/* Shift-based fee hint */}
-              <div className="mt-1.5 space-y-1">
+              <div className="mt-1.5 space-y-1.5">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="inline-flex items-center gap-1 text-xs bg-primary-50 border border-primary-100 text-primary font-semibold px-2 py-0.5 rounded-full">
-                    {shiftCount} shift{shiftCount !== 1 ? 's' : ''} · {formatCurrency(standardFee)}/mo standard
+                    {shiftCount} shift{shiftCount !== 1 ? 's' : ''} · {formatCurrency(fee)}/mo
                   </span>
-                  {standardFee > 0 && (
+                  {fee > 0 && (
                     <button type="button"
-                      onClick={() => { setAmount(String(standardFee)); setMonthsTouched(false); }}
+                      onClick={() => { setAmount(String(fee)); setMonthsTouched(false); }}
                       className="text-xs text-primary underline underline-offset-2 hover:text-primary-dark">
-                      Fill ₹{standardFee}
+                      Fill ₹{fee}
                     </button>
-                  )}
-                  {fee > 0 && fee !== standardFee && (
-                    <span className="text-xs text-orange-500">
-                      Saved rate: {formatCurrency(fee)} — may be outdated
-                      <button type="button"
-                        onClick={() => { setAmount(String(fee)); setMonthsTouched(false); }}
-                        className="ml-1 underline underline-offset-2 hover:text-orange-700">
-                        Fill
-                      </button>
-                    </span>
                   )}
                 </div>
                 {fee > 0 && parsedAmt > 0 && (
@@ -253,6 +254,15 @@ export default function PaymentModal({ student, onClose, onSuccess }) {
                     {formatCurrency(fee)} × {numMonths} = {formatCurrency(fee * numMonths)}
                     {remainder > 0 && <span className="text-orange-500"> (+{formatCurrency(remainder)} extra)</span>}
                   </p>
+                )}
+                {feeIsStale && (
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" checked={updateFee} onChange={e => setUpdateFee(e.target.checked)}
+                      className="w-3.5 h-3.5 accent-primary" />
+                    <span className="text-xs text-orange-600">
+                      Saved fee is <strong>{formatCurrency(savedFee)}</strong> — update to <strong>{formatCurrency(standardFee)}</strong> for {shiftCount} shift{shiftCount !== 1 ? 's' : ''}
+                    </span>
+                  </label>
                 )}
               </div>
             </div>
