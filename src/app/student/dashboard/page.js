@@ -12,6 +12,7 @@ import {
   MONTH_NAMES,
   photoUrl,
 } from "@/lib/utils";
+import StudentAvatar from "@/components/StudentAvatar";
 import {
   Calendar,
   CreditCard,
@@ -203,15 +204,12 @@ function MembershipCard({ student, membershipDuration }) {
               className="w-18 h-18 rounded-2xl overflow-hidden border-2 border-gold/30 flex items-center justify-center bg-white/10 shadow-lg"
               style={{ width: 72, height: 72 }}
             >
-              {student?.photo ? (
-                <img
-                  src={photoUrl(student.photo)}
-                  alt={student?.fullName}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <User className="w-8 h-8 text-white/40" />
-              )}
+              <StudentAvatar
+                src={photoUrl(student?.photo)}
+                alt={student?.fullName}
+                imgClassName="w-full h-full object-cover"
+                fallback={<User className="w-8 h-8 text-white/40" />}
+              />
             </div>
             <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-green-400 border-2 border-primary-dark" />
           </div>

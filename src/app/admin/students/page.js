@@ -9,6 +9,7 @@ import {
 import toast from 'react-hot-toast';
 import api from '@/lib/api';
 import { formatDate, formatCurrency, photoUrl, getWhatsAppUrl } from '@/lib/utils';
+import StudentAvatar from '@/components/StudentAvatar';
 
 const WhatsAppIcon = ({ size = 14 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
@@ -136,18 +137,16 @@ export default function StudentsPage() {
               {/* Card top */}
               <div className="bg-gradient-to-r from-primary to-primary-light p-5 flex items-center gap-4">
                 <div className="w-14 h-14 rounded-xl bg-white/20 border border-white/20 flex items-center justify-center overflow-hidden flex-shrink-0">
-                  {s.photo ? (
-                    <img
-                      src={photoUrl(s.photo)}
-                      alt={s.fullName}
-                      className="w-full h-full object-cover"
-                      onError={e => { e.target.style.display = 'none'; }}
-                    />
-                  ) : (
-                    <span className="text-white/80 font-display font-bold text-xl">
-                      {s.fullName?.charAt(0)?.toUpperCase()}
-                    </span>
-                  )}
+                  <StudentAvatar
+                    src={photoUrl(s.photo)}
+                    alt={s.fullName}
+                    imgClassName="w-full h-full object-cover"
+                    fallback={
+                      <span className="text-white/80 font-display font-bold text-xl">
+                        {s.fullName?.charAt(0)?.toUpperCase()}
+                      </span>
+                    }
+                  />
                 </div>
                 <div className="min-w-0 flex-1">
                   <h3 className="text-white font-semibold truncate">{s.fullName}</h3>

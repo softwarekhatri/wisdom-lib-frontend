@@ -1,6 +1,6 @@
 'use client';
-import { useState, useEffect } from 'react';
-import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useState, useEffect, useRef } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import {
@@ -10,6 +10,7 @@ import {
 import toast from 'react-hot-toast';
 import api from '@/lib/api';
 import { formatDate, formatCurrency, getPaymentStatus, MONTH_NAMES, photoUrl, getWhatsAppUrl, getAdmissionWhatsAppUrl, BATCHES, blockNumberSpin } from '@/lib/utils';
+import StudentAvatar from '@/components/StudentAvatar';
 
 const WhatsAppIcon = ({ size = 16 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
@@ -26,13 +27,14 @@ export default function StudentDetailPage() {
   const canModify = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
   const { id } = useParams();
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const isEditMode = searchParams.get('edit') === 'true';
+  const fetchedFor = useRef(null);
 
   const [student, setStudent] = useState(null);
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [editing, setEditing] = useState(isEditMode);
+  const [editing, setEditing] = useState(() =>
+    typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('edit') === 'true'
+  );
   const [saving, setSaving] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showResetPass, setShowResetPass] = useState(false);
@@ -73,7 +75,16 @@ export default function StudentDetailPage() {
   const updateSeatRow = (index, field, value) =>
     setSeatAssignments(rows => rows.map((row, i) => (i === index ? { ...row, [field]: value } : row)));
 
-  useEffect(() => { fetchData(); }, [id]);
+  useEffect(() => {
+    if (fetchedFor.current === id) return;
+    fetchedFor.current = id;
+    fetchData();
+  }, [id]);
+
+  const handlePhotoSelect = (file) => {
+    setPhotoFile(file);
+    setPhotoPreview(URL.createObjectURL(file));
+  };
 
   const handleSave = async (e) => {
     e.preventDefault();
@@ -207,11 +218,12 @@ export default function StudentDetailPage() {
             {/* Photo */}
             <div className="bg-gradient-to-br from-primary to-primary-light h-40 flex items-center justify-center relative">
               <div className="w-24 h-24 rounded-2xl bg-white/20 border-4 border-white/30 flex items-center justify-center overflow-hidden">
-                {(photoPreview || photoUrl(student.photo)) ? (
-                  <img src={photoPreview || photoUrl(student.photo)} alt={student.fullName} className="w-full h-full object-cover" />
-                ) : (
-                  <User className="w-10 h-10 text-white/60" />
-                )}
+                <StudentAvatar
+                  src={photoPreview || photoUrl(student.photo)}
+                  alt={student.fullName}
+                  imgClassName="w-full h-full object-cover"
+                  fallback={<User className="w-10 h-10 text-white/60" />}
+                />
               </div>
               {editing && (
                 <div className="absolute bottom-3 right-3 flex gap-2">
@@ -219,7 +231,7 @@ export default function StudentDetailPage() {
                     <Upload size={14} />
                     <input type="file" accept="image/*" className="hidden" onChange={e => {
                       const f = e.target.files[0];
-                      if (f) { setPhotoFile(f); setPhotoPreview(URL.createObjectURL(f)); }
+                      if (f) handlePhotoSelect(f);
                     }} />
                   </label>
                   <button type="button" onClick={() => setShowCamera(true)} className="bg-white text-primary p-2 rounded-xl shadow-lg hover:bg-primary-50 transition-colors" title="Take Photo">
@@ -501,7 +513,7 @@ export default function StudentDetailPage() {
       {showCamera && (
         <CameraCapture
           onClose={() => setShowCamera(false)}
-          onCapture={(file) => { setPhotoFile(file); setPhotoPreview(URL.createObjectURL(file)); setShowCamera(false); }}
+          onCapture={(file) => { setShowCamera(false); handlePhotoSelect(file); }}
         />
       )}
 

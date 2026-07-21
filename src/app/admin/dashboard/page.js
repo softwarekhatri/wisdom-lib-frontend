@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Users, CreditCard, AlertTriangle, ChevronRight } from 'lucide-react';
 import api from '@/lib/api';
 import { formatCurrency, formatDate, photoUrl, getWhatsAppUrl } from '@/lib/utils';
+import StudentAvatar from '@/components/StudentAvatar';
 
 const WhatsAppIcon = ({ size = 14 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
@@ -168,9 +169,11 @@ export default function AdminDashboardPage() {
               {dueSoon.map((s) => (
                 <div key={s._id} className="px-4 py-3 flex items-center gap-3 hover:bg-primary-50 transition-colors">
                   <div className="w-8 h-8 rounded-lg bg-primary-100 flex items-center justify-center text-xs font-bold text-primary flex-shrink-0 overflow-hidden">
-                    {s.photo
-                      ? <img src={photoUrl(s.photo)} alt="" className="w-full h-full object-cover" />
-                      : s.fullName?.charAt(0)}
+                    <StudentAvatar
+                      src={photoUrl(s.photo)}
+                      imgClassName="w-full h-full object-cover"
+                      fallback={<span>{s.fullName?.charAt(0)}</span>}
+                    />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-primary truncate">{s.fullName}</p>

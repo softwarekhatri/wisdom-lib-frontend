@@ -5,6 +5,7 @@ import { X, IndianRupee, Banknote, CreditCard, CheckCircle, Loader2, CalendarChe
 import toast from 'react-hot-toast';
 import api from '@/lib/api';
 import { MONTH_NAMES, formatCurrency, photoUrl, blockNumberSpin } from '@/lib/utils';
+import StudentAvatar from '@/components/StudentAvatar';
 import { addMonths, addDays, format, differenceInDays } from 'date-fns';
 
 const TODAY = new Date().toISOString().split('T')[0];
@@ -164,9 +165,11 @@ export default function PaymentModal({ student, onClose, onSuccess }) {
         <div className="bg-gradient-to-r from-primary to-primary-light px-5 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-white/20 border border-white/20 flex items-center justify-center overflow-hidden flex-shrink-0">
-              {student?.photo
-                ? <img src={photoUrl(student.photo)} alt="" className="w-full h-full object-cover" />
-                : <span className="text-white font-bold text-base">{student?.fullName?.charAt(0)?.toUpperCase()}</span>}
+              <StudentAvatar
+                src={photoUrl(student?.photo)}
+                imgClassName="w-full h-full object-cover"
+                fallback={<span className="text-white font-bold text-base">{student?.fullName?.charAt(0)?.toUpperCase()}</span>}
+              />
             </div>
             <div>
               <p className="text-white font-display font-bold text-sm leading-tight">{student?.fullName}</p>

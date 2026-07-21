@@ -9,6 +9,7 @@ import { TrendingUp, TrendingDown, Users, IndianRupee, Calendar, ChevronLeft, Ch
 import toast from 'react-hot-toast';
 import api from '@/lib/api';
 import { formatDate, formatCurrency, MONTH_NAMES, photoUrl } from '@/lib/utils';
+import StudentAvatar from '@/components/StudentAvatar';
 
 const CHART_COLORS = { primary: '#43332c', gold: '#c9a15e', light: '#9a7b6e', green: '#16a34a', red: '#dc2626' };
 
@@ -254,7 +255,11 @@ export default function ReportsPage() {
                   <div className="p-4">
                     <div className="flex items-center gap-3 mb-3">
                       <div className="w-12 h-12 rounded-xl bg-primary-100 flex items-center justify-center text-primary font-bold overflow-hidden">
-                        {s.photo ? <img src={photoUrl(s.photo)} className="w-full h-full object-cover" alt="" /> : s.fullName?.charAt(0)}
+                        <StudentAvatar
+                          src={photoUrl(s.photo)}
+                          imgClassName="w-full h-full object-cover"
+                          fallback={<span>{s.fullName?.charAt(0)}</span>}
+                        />
                       </div>
                       <div>
                         <p className="font-semibold text-primary text-sm">{s.fullName}</p>

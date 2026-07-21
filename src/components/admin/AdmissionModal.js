@@ -59,6 +59,7 @@ export default function AdmissionModal({ onClose, onSuccess }) {
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
   const [showCamera, setShowCamera] = useState(false);
+  const [updatingPhoto, setUpdatingPhoto] = useState(false);
   const [createdStudent, setCreatedStudent] = useState(null);
 
   const [studentForm, setStudentForm] = useState({
@@ -95,16 +96,39 @@ export default function AdmissionModal({ onClose, onSuccess }) {
 
   const handlePhotoChange = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      setPhotoFile(file);
-      setPhotoPreview(URL.createObjectURL(file));
-    }
+    if (file) { setPhotoFile(file); setPhotoPreview(URL.createObjectURL(file)); }
   };
 
   const handlePhotoCapture = (file) => {
     setPhotoFile(file);
     setPhotoPreview(URL.createObjectURL(file));
     setShowCamera(false);
+  };
+
+  const handlePhotoUpdateStep2 = async (file) => {
+    if (!file || !createdStudent) return;
+    setPhotoFile(file);
+    setPhotoPreview(URL.createObjectURL(file));
+    setUpdatingPhoto(true);
+    try {
+      const fd = new FormData();
+      Object.entries(studentForm).forEach(([k, v]) => v && fd.append(k, v));
+      fd.append("photo", file);
+      await api.put(`/students/${createdStudent._id}`, fd, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      toast.success("Photo updated!");
+    } catch (err) {
+      console.error("[AdmissionModal step2] photo update failed:", err);
+      toast.error("Failed to update photo");
+    } finally {
+      setUpdatingPhoto(false);
+    }
+  };
+
+  const handlePhotoCaptureStep2 = (file) => {
+    setShowCamera(false);
+    handlePhotoUpdateStep2(file);
   };
 
   const handleStudentSubmit = async (e) => {
@@ -563,6 +587,49 @@ export default function AdmissionModal({ onClose, onSuccess }) {
                     Student admitted! Now record the initial payment below.
                   </div>
 
+                  {/* Photo edit after admission */}
+                  <div className="flex items-center gap-3 p-3 bg-primary-50 rounded-xl border border-primary-100">
+                    <div className="w-12 h-12 rounded-xl overflow-hidden bg-white border border-primary-200 flex items-center justify-center flex-shrink-0">
+                      {photoPreview ? (
+                        <img src={photoPreview} alt="Student" className="w-full h-full object-cover" />
+                      ) : (
+                        <User className="w-6 h-6 text-primary-lighter" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold text-primary mb-1.5">Student Photo</p>
+                      <div className="flex gap-2 flex-wrap">
+                        <label className="cursor-pointer flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-primary-100 rounded-lg text-primary text-xs font-medium transition-colors border border-primary-200">
+                          <Upload className="w-3.5 h-3.5" />
+                          {photoPreview ? "Change" : "Upload"}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              const f = e.target.files[0];
+                              if (f) handlePhotoUpdateStep2(f);
+                            }}
+                          />
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => setShowCamera(true)}
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-primary-100 rounded-lg text-primary text-xs font-medium transition-colors border border-primary-200"
+                        >
+                          <Camera className="w-3.5 h-3.5" />
+                          Camera
+                        </button>
+                        {updatingPhoto && (
+                          <span className="flex items-center gap-1 text-xs text-primary-lighter">
+                            <div className="w-3 h-3 border-2 border-primary-200 border-t-primary rounded-full animate-spin" />
+                            Saving…
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Amount */}
                   <div>
                     <label className="block text-xs font-bold text-primary mb-2 uppercase tracking-wide">
@@ -797,7 +864,7 @@ export default function AdmissionModal({ onClose, onSuccess }) {
       {showCamera && (
         <CameraCapture
           onClose={() => setShowCamera(false)}
-          onCapture={handlePhotoCapture}
+          onCapture={step === 1 ? handlePhotoCapture : handlePhotoCaptureStep2}
         />
       )}
     </div>

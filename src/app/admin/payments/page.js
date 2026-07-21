@@ -5,6 +5,7 @@ import { Search, Calendar, IndianRupee, Download, ChevronLeft, ChevronRight, Fil
 import toast from 'react-hot-toast';
 import api from '@/lib/api';
 import { formatDate, formatCurrency, MONTH_NAMES, photoUrl } from '@/lib/utils';
+import StudentAvatar from '@/components/StudentAvatar';
 
 const PRESETS = [
   { label: 'Today', days: 0 },
@@ -137,11 +138,11 @@ export default function PaymentsPage() {
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-lg bg-primary-100 flex items-center justify-center text-xs font-bold text-primary overflow-hidden">
-                          {p.student?.photo ? (
-                            <img src={photoUrl(p.student.photo)} alt="" className="w-full h-full object-cover" />
-                          ) : (
-                            p.student?.fullName?.charAt(0)
-                          )}
+                          <StudentAvatar
+                            src={photoUrl(p.student?.photo)}
+                            imgClassName="w-full h-full object-cover"
+                            fallback={<span>{p.student?.fullName?.charAt(0)}</span>}
+                          />
                         </div>
                         <div>
                           <p className="text-sm font-medium text-primary">{p.student?.fullName || '—'}</p>
