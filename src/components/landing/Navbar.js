@@ -1,14 +1,14 @@
-'use client';
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import Link from 'next/link';
-import { Menu, X, UserCircle } from 'lucide-react';
+"use client";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import Link from "next/link";
+import { Menu, X, UserCircle } from "lucide-react";
 
 const links = [
-  { href: '#about', label: 'About' },
-  { href: '#gallery', label: 'Gallery' },
-  { href: '#features', label: 'Services' },
-  { href: '#contact', label: 'Contact' },
+  { href: "#about", label: "About" },
+  { href: "#gallery", label: "Gallery" },
+  { href: "#features", label: "Services" },
+  { href: "#contact", label: "Contact" },
 ];
 
 export default function Navbar() {
@@ -17,28 +17,42 @@ export default function Navbar() {
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
-    window.addEventListener('scroll', onScroll);
-    return () => window.removeEventListener('scroll', onScroll);
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   return (
     <motion.nav
       initial={{ y: -80, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.6, ease: 'easeOut' }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-        scrolled ? 'py-3 bg-primary/95 backdrop-blur-xl shadow-2xl' : 'py-5 bg-transparent'
+        scrolled
+          ? "py-3 bg-primary/95 backdrop-blur-xl shadow-2xl"
+          : "py-5 bg-transparent"
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-3 group">
-          <div className="w-10 h-10 rounded-full bg-gold flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform overflow-hidden">
-            <img src="/logo/wisdom-logo.png" alt="Wisdom Library" className="w-full h-full object-cover" />
+          <div className="w-10 h-10 rounded-xl bg-gold flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform overflow-hidden">
+            <img
+              src="/logo/wisdom-logo.png"
+              alt="Wisdom Library"
+              className="w-full h-full object-cover"
+            />
           </div>
           <div>
-            <div className="text-white font-display font-bold text-lg leading-none">Wisdom</div>
-            <div className="text-gold-light text-xs tracking-widest uppercase leading-none">Library</div>
+            <div className="text-white font-display font-bold text-xl leading-none tracking-wide">
+              Wisdom
+            </div>
+            <div className="flex items-center gap-1.5 mt-1">
+              <div className="h-px w-3 bg-gold/60" />
+              <span className="text-gold-light text-[10px] tracking-[0.22em] uppercase font-semibold">
+                Library
+              </span>
+              <div className="h-px w-3 bg-gold/60" />
+            </div>
           </div>
         </Link>
 
@@ -81,7 +95,7 @@ export default function Navbar() {
         {menuOpen && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
+            animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             className="md:hidden bg-primary-dark/98 backdrop-blur-xl border-t border-white/10"
           >
