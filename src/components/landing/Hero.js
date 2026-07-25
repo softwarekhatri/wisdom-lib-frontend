@@ -18,88 +18,70 @@ const STAR_CLIP =
 
 function OfferHighlight() {
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.6, delay: 0.35 }}
-      className="inline-flex items-center gap-3 mb-4 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-gold-dark via-gold to-gold-light shadow-[0_8px_24px_rgba(201,161,94,0.35)]"
-    >
-      <span className="font-display font-bold text-primary-dark text-sm sm:text-lg leading-snug">
-        Pay for 3 Months &amp; Get 1 Month
+    <div className="inline-block relative mb-6 mt-2">
+      <span className="absolute -top-3 left-4 z-10 px-3 py-0.5 rounded-full bg-red-600 text-white text-[9px] font-bold uppercase tracking-[0.18em] shadow-lg">
+        🎓 Admission Offer
       </span>
-
-      <motion.span
-        animate={{ rotate: [-8, 4, -8], scale: [1, 1.08, 1] }}
-        transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-        className="relative inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 shrink-0"
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.6, delay: 0.35 }}
+        className="inline-flex items-center gap-3 pt-4 pb-2.5 px-4 rounded-2xl bg-gradient-to-r from-gold-dark via-gold to-gold-light shadow-[0_8px_24px_rgba(201,161,94,0.35)] border-2 border-red-500/30"
       >
-        <span
-          className="absolute inset-0 bg-red-600"
-          style={{ clipPath: STAR_CLIP }}
-        />
-        <span className="relative font-display font-black text-white text-[30px] sm:text-sm uppercase tracking-wide">
-          Free
+        <span className="font-display font-bold text-primary-dark text-sm sm:text-lg leading-snug">
+          Pay for 3 Months &amp; Get 1 Month
         </span>
-      </motion.span>
-    </motion.div>
+
+        <motion.span
+          animate={{ rotate: [-8, 4, -8], scale: [1, 1.08, 1] }}
+          transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+          className="relative inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 shrink-0"
+        >
+          <span
+            className="absolute inset-0 bg-red-600"
+            style={{ clipPath: STAR_CLIP }}
+          />
+          <span className="relative font-display font-black text-white text-[30px] sm:text-sm uppercase tracking-wide">
+            Free
+          </span>
+        </motion.span>
+      </motion.div>
+    </div>
   );
 }
 
-const OFFER_DEADLINE = new Date("2026-07-21T00:00:00");
+const WORDS = ['Knowledge', 'Wisdom', 'Excellence', 'Growth', 'Success'];
 
-function getTimeLeft() {
-  const diff = OFFER_DEADLINE.getTime() - Date.now();
-  if (diff <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
-  return {
-    days: Math.floor(diff / (1000 * 60 * 60 * 24)),
-    hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
-    minutes: Math.floor((diff / (1000 * 60)) % 60),
-    seconds: Math.floor((diff / 1000) % 60),
-  };
-}
-
-function CountdownTimer() {
-  const [timeLeft, setTimeLeft] = useState(null);
+function TypeWriter() {
+  const [wordIndex, setWordIndex] = useState(0);
+  const [charIndex, setCharIndex] = useState(0);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    setTimeLeft(getTimeLeft());
-    const timer = setInterval(() => setTimeLeft(getTimeLeft()), 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const units = [
-    { label: "Days", value: timeLeft?.days },
-    { label: "Hours", value: timeLeft?.hours },
-    { label: "Minutes", value: timeLeft?.minutes },
-    { label: "Seconds", value: timeLeft?.seconds },
-  ];
+    const word = WORDS[wordIndex];
+    if (!deleting && charIndex < word.length) {
+      const t = setTimeout(() => setCharIndex((c) => c + 1), 100);
+      return () => clearTimeout(t);
+    }
+    if (!deleting && charIndex === word.length) {
+      const t = setTimeout(() => setDeleting(true), 1800);
+      return () => clearTimeout(t);
+    }
+    if (deleting && charIndex > 0) {
+      const t = setTimeout(() => setCharIndex((c) => c - 1), 60);
+      return () => clearTimeout(t);
+    }
+    if (deleting && charIndex === 0) {
+      setDeleting(false);
+      setWordIndex((i) => (i + 1) % WORDS.length);
+    }
+  }, [charIndex, deleting, wordIndex]);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, delay: 0.4 }}
-      className="mb-6"
-    >
-      <p className="text-white font-display font-bold text-sm sm:text-base mb-2">
-        ⏰ Hurry! <span className="text-gold">Offer Ends Soon</span>
-      </p>
-      <div className="grid grid-cols-4 gap-3 max-w-sm">
-        {units.map((u) => (
-          <div
-            key={u.label}
-            className="rounded-xl bg-primary-dark/80 border border-gold/30 backdrop-blur-sm text-white py-3 text-center shadow-[0_8px_24px_rgba(0,0,0,0.45)]"
-          >
-            <div className="font-display font-black text-xl sm:text-2xl tabular-nums text-gold">
-              {u.value === undefined ? "--" : String(u.value).padStart(2, "0")}
-            </div>
-            <div className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mt-0.5 text-white/60">
-              {u.label}
-            </div>
-          </div>
-        ))}
-      </div>
-    </motion.div>
+    <span className="text-gold">
+      {WORDS[wordIndex].slice(0, charIndex)}
+      <span className="animate-pulse">|</span>
+    </span>
   );
 }
 
@@ -219,35 +201,22 @@ export default function Hero() {
                 Premium Library Experience
               </span>
             </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-red-400/40 bg-red-600"
-            >
-              <span className="text-white text-xs font-semibold tracking-widest uppercase">
-                LIMITED TIME OFFER
-              </span>
-            </motion.div>
           </div>
 
           <motion.h1
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.3 }}
-            className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight mb-4"
+            className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight mb-6"
           >
-            🎉 Grand Opening
+            Your Journey to
             <br />
-            <span className="text-white/90">21st July 2026</span>
+            <TypeWriter />
+            <br />
+            <span className="text-white/90">Starts Here</span>
           </motion.h1>
 
-          <div>
-            <OfferHighlight />
-          </div>
-
-          <CountdownTimer />
+          <OfferHighlight />
 
           <motion.p
             initial={{ opacity: 0, y: 20 }}

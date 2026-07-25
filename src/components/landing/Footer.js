@@ -47,19 +47,19 @@ export default function Footer() {
                 href="https://www.instagram.com/wisdomlibrary_rfg"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-9 h-9 rounded-lg bg-white/10 hover:bg-gradient-to-tr hover:from-yellow-500 hover:via-pink-500 hover:to-purple-600 flex items-center justify-center transition-all duration-300 group"
+                className="w-11 h-11 rounded-xl bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 flex items-center justify-center transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-pink-500/40"
                 title="@wisdomlibrary_rfg"
               >
-                <InstagramIcon className="w-4 h-4 text-white/70 group-hover:text-white" />
+                <InstagramIcon className="w-5 h-5 text-white" />
               </a>
               <a
                 href="https://wa.me/917209703947"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-9 h-9 rounded-lg bg-white/10 hover:bg-green-600 flex items-center justify-center transition-all duration-300 group"
+                className="w-11 h-11 rounded-xl bg-green-500 hover:bg-green-400 flex items-center justify-center transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-green-500/40"
                 title="WhatsApp"
               >
-                <WhatsAppIcon className="w-4 h-4 text-white/70 group-hover:text-white" />
+                <WhatsAppIcon className="w-5 h-5 text-white" />
               </a>
             </div>
           </div>
@@ -96,7 +96,7 @@ export default function Footer() {
             </h4>
             <ul className="space-y-3">
               <li className="flex items-start gap-2 text-white/60 text-sm">
-                <Phone className="w-4 h-4 mt-0.5 text-gold flex-shrink-0" />
+                <Phone className="w-4 h-4 mt-0.5 text-blue-400 flex-shrink-0" />
                 <a
                   href="tel:+917209703947"
                   className="hover:text-gold transition-colors"
@@ -105,7 +105,7 @@ export default function Footer() {
                 </a>
               </li>
               <li className="flex items-start gap-2 text-white/60 text-sm">
-                <WhatsAppIcon className="w-4 h-4 mt-0.5 text-gold flex-shrink-0" />
+                <WhatsAppIcon className="w-4 h-4 mt-0.5 text-green-400 flex-shrink-0" />
                 <a
                   href="https://wa.me/917209703947"
                   target="_blank"
@@ -115,16 +115,8 @@ export default function Footer() {
                   +91 7209703947 (WhatsApp)
                 </a>
               </li>
-              {/* <li className="flex items-start gap-2 text-white/60 text-sm">
-                <Mail className="w-4 h-4 mt-0.5 text-gold flex-shrink-0" />
-                <span>info@wisdomlibrary.in</span>
-              </li>
               <li className="flex items-start gap-2 text-white/60 text-sm">
-                <Mail className="w-4 h-4 mt-0.5 text-gold flex-shrink-0" />
-                <span>feedback@wisdomlibrary.in</span>
-              </li> */}
-              <li className="flex items-start gap-2 text-white/60 text-sm">
-                <Mail className="w-4 h-4 mt-0.5 text-gold flex-shrink-0" />
+                <Mail className="w-4 h-4 mt-0.5 text-sky-400 flex-shrink-0" />
                 <a
                   href="mailto:wisdomlibraryrfg@gmail.com"
                   className="hover:text-gold transition-colors"
@@ -133,7 +125,7 @@ export default function Footer() {
                 </a>
               </li>
               <li className="flex items-start gap-2 text-white/60 text-sm">
-                <InstagramIcon className="w-4 h-4 mt-0.5 text-gold flex-shrink-0" />
+                <InstagramIcon className="w-4 h-4 mt-0.5 text-pink-400 flex-shrink-0" />
                 <a
                   href="https://www.instagram.com/wisdomlibrary_rfg"
                   target="_blank"
@@ -144,7 +136,7 @@ export default function Footer() {
                 </a>
               </li>
               <li className="flex items-start gap-2 text-white/60 text-sm">
-                <MapPin className="w-4 h-4 mt-0.5 text-gold flex-shrink-0" />
+                <MapPin className="w-4 h-4 mt-0.5 text-red-400 flex-shrink-0" />
                 <span>Raja Bagicha, Rafiganj, nearby Lakshwadeep School</span>
               </li>
             </ul>
