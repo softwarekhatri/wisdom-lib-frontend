@@ -35,15 +35,22 @@ export default function AdminLayout({ children }) {
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Top bar */}
-        <header className="bg-white border-b border-primary-100 px-4 sm:px-6 py-4 flex items-center gap-4 shadow-sm flex-shrink-0">
+        <header className="bg-white border-b border-primary-100 px-4 sm:px-6 py-3 flex items-center gap-3 shadow-sm flex-shrink-0">
           <button
-            className="lg:hidden p-2 rounded-lg hover:bg-primary-50 text-primary"
+            className="lg:hidden p-2 rounded-xl bg-primary text-white hover:bg-primary-dark transition-colors flex-shrink-0"
             onClick={() => setSidebarOpen(true)}
+            aria-label="Open menu"
           >
-            <Menu size={22} />
+            <Menu size={20} />
           </button>
 
-          <div className="flex-1" />
+          {/* Branding shown only on mobile (desktop has sidebar) */}
+          <div className="lg:hidden flex items-center gap-2 flex-1 min-w-0">
+            <span className="font-display font-bold text-primary text-sm truncate">Wisdom Library</span>
+            <span className="text-primary-lighter text-xs hidden sm:inline">Admin</span>
+          </div>
+
+          <div className="hidden lg:block flex-1" />
 
           <div className="flex items-center gap-3">
             <button className="p-2 rounded-lg hover:bg-primary-50 text-primary-lighter hover:text-primary relative">

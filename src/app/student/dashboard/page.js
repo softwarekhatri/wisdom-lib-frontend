@@ -713,11 +713,6 @@ function PaymentHistory({ payments, page, setPage, pagination }) {
                         ? `Covers: ${p.monthsCovered.map((mc) => `${MONTH_NAMES[mc.month - 1].slice(0, 3)} ${mc.year}`).join(", ")}`
                         : "Month not specified"}
                     </p>
-                    {p.referenceNo && (
-                      <p className="text-xs text-primary-lighter/70 mt-0.5 font-mono">
-                        Ref: {p.referenceNo}
-                      </p>
-                    )}
                   </div>
                   <div className="text-right flex-shrink-0">
                     <p className="text-base font-display font-bold text-primary">

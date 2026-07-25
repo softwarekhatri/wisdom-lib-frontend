@@ -267,6 +267,7 @@ export default function StudentDetailPage() {
                   { icon: Phone, label: 'Mobile', value: student.mobile || '—' },
                   { icon: Phone, label: 'WhatsApp', value: student.whatsappNumber || student.mobile || '—' },
                   { icon: Mail, label: 'Email', value: student.email || '—' },
+                  { icon: MapPin, label: 'Address', value: student.address || '—' },
                 ].map(({ icon: Icon, label, value, copyable }) => (
                   <div key={label} className="flex items-center gap-2 text-primary-lighter">
                     <Icon className="w-4 h-4 flex-shrink-0" />
