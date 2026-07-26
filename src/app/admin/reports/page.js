@@ -8,7 +8,7 @@ import {
 import { TrendingUp, TrendingDown, Users, IndianRupee, Calendar, ChevronLeft, ChevronRight, Filter } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '@/lib/api';
-import { formatDate, formatCurrency, MONTH_NAMES, photoUrl } from '@/lib/utils';
+import { formatDate, formatCurrency, MONTH_NAMES, photoUrl, toLocalDateStr } from '@/lib/utils';
 import StudentAvatar from '@/components/StudentAvatar';
 
 const CHART_COLORS = { primary: '#43332c', gold: '#c9a15e', light: '#9a7b6e', green: '#16a34a', red: '#dc2626' };
@@ -29,12 +29,12 @@ const PRESETS = [
 
 function getDateRange(preset) {
   const now = new Date();
-  const end = now.toISOString().split('T')[0];
+  const end = toLocalDateStr(now);
   let start;
   if (preset === 'today') start = end;
-  else if (preset === 'week') { const d = new Date(now); d.setDate(d.getDate() - 7); start = d.toISOString().split('T')[0]; }
-  else if (preset === 'month') { const d = new Date(now); d.setDate(d.getDate() - 30); start = d.toISOString().split('T')[0]; }
-  else if (preset === '3months') { const d = new Date(now); d.setDate(d.getDate() - 90); start = d.toISOString().split('T')[0]; }
+  else if (preset === 'week') { const d = new Date(now); d.setDate(d.getDate() - 7); start = toLocalDateStr(d); }
+  else if (preset === 'month') { const d = new Date(now); d.setDate(d.getDate() - 30); start = toLocalDateStr(d); }
+  else if (preset === '3months') { const d = new Date(now); d.setDate(d.getDate() - 90); start = toLocalDateStr(d); }
   else start = end;
   return { startDate: start, endDate: end };
 }

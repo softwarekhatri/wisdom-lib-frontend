@@ -6,6 +6,10 @@ import {
   addDays,
 } from "date-fns";
 
+// Returns YYYY-MM-DD in LOCAL time — avoids UTC offset shifting the date (e.g. IST midnight = prev day in UTC)
+export const toLocalDateStr = (date) =>
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+
 export const MONTH_NAMES = [
   "January",
   "February",

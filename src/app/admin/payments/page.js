@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { Search, Calendar, IndianRupee, Download, ChevronLeft, ChevronRight, Filter } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '@/lib/api';
-import { formatDate, formatCurrency, MONTH_NAMES, photoUrl } from '@/lib/utils';
+import { formatDate, formatCurrency, MONTH_NAMES, photoUrl, toLocalDateStr } from '@/lib/utils';
 import StudentAvatar from '@/components/StudentAvatar';
 
 const PRESETS = [
@@ -23,8 +23,8 @@ function getDateRange(days) {
     start.setDate(start.getDate() - days);
   }
   return {
-    startDate: start.toISOString().split('T')[0],
-    endDate: end.toISOString().split('T')[0],
+    startDate: toLocalDateStr(start),
+    endDate: toLocalDateStr(end),
   };
 }
 
