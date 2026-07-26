@@ -64,6 +64,7 @@ export default function PaymentModal({ student, onClose, onSuccess }) {
   const [amount, setAmount]         = useState('');
   const [numMonths, setNumMonths]   = useState(1);
   const [monthsTouched, setMonthsTouched] = useState(false);
+  const [noMonthCoverage, setNoMonthCoverage] = useState(false);
   const [mode, setMode]             = useState('cash');
   const [referenceNo, setRefNo]     = useState('');
   const [receivedDate, setDate]     = useState(TODAY);
@@ -121,9 +122,9 @@ export default function PaymentModal({ student, onClose, onSuccess }) {
     setMonthsTouched(false);
   };
 
-  const covered = parsedAmt > 0 ? buildCoveredMonths(startYear, startMonth, numMonths) : [];
+  const covered = parsedAmt > 0 && !noMonthCoverage ? buildCoveredMonths(startYear, startMonth, numMonths) : [];
   const admBase         = student?.admissionDate ? new Date(student.admissionDate) : new Date();
-  const newPaidThrough  = parsedAmt > 0 ? addMonths(admBase, totalMonthsPaid + numMonths) : null;
+  const newPaidThrough  = parsedAmt > 0 && !noMonthCoverage ? addMonths(admBase, totalMonthsPaid + numMonths) : null;
   const newNextDue      = newPaidThrough ? addDays(newPaidThrough, 1) : null;
   const paidThroughStr  = newPaidThrough ? format(newPaidThrough, 'MMM d, yyyy') : null;
   const dueDateStr      = newNextDue ? format(newNextDue, 'MMMM d, yyyy') : null;
@@ -144,14 +145,12 @@ export default function PaymentModal({ student, onClose, onSuccess }) {
     setSubmitting(true);
     try {
       await api.post('/payments', {
-        studentId:    student._id,
-        amount:       parsedAmt,
+        studentId:   student._id,
+        amount:      parsedAmt,
         mode,
-        referenceNo:  referenceNo.trim() || undefined,
+        referenceNo: referenceNo.trim() || undefined,
         receivedDate,
-        startYear,
-        startMonth,
-        numMonths,
+        ...(!noMonthCoverage && { startYear, startMonth, numMonths }),
       });
       if (updateFee && standardFee > 0) {
         await api.put(`/students/${student._id}`, { libraryFees: standardFee });
@@ -269,46 +268,68 @@ export default function PaymentModal({ student, onClose, onSuccess }) {
 
             {/* ── Months to cover — editable for bundle/discounted pricing ── */}
             <div>
-              <label className="block text-xs font-bold text-primary mb-2 uppercase tracking-wide">
-                Months to Cover
-              </label>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-xs font-bold text-primary uppercase tracking-wide">
+                  Months to Cover
+                </label>
                 <button
                   type="button"
-                  onClick={() => adjustMonths(-1)}
-                  disabled={numMonths <= 1}
-                  className="w-10 h-10 rounded-xl border border-primary-200 text-primary font-bold text-lg hover:bg-primary-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  onClick={() => setNoMonthCoverage(v => !v)}
+                  className={`text-xs font-semibold px-2.5 py-1 rounded-lg border transition-all ${
+                    noMonthCoverage
+                      ? 'bg-orange-50 border-orange-300 text-orange-600'
+                      : 'bg-primary-50 border-primary-200 text-primary-lighter hover:text-primary'
+                  }`}
                 >
-                  −
+                  {noMonthCoverage ? '✕ No month coverage' : 'Skip month coverage'}
                 </button>
-                <input
-                  type="number"
-                  min="1"
-                  value={numMonths}
-                  onChange={handleMonthsInput}
-                  {...blockNumberSpin}
-                  className="input-field w-16 text-center font-bold"
-                />
-                <button
-                  type="button"
-                  onClick={() => adjustMonths(1)}
-                  className="w-10 h-10 rounded-xl border border-primary-200 text-primary font-bold text-lg hover:bg-primary-50 transition-colors"
-                >
-                  +
-                </button>
-                {monthsTouched && suggestedMonths !== numMonths && (
-                  <button
-                    type="button"
-                    onClick={() => { setMonthsTouched(false); setNumMonths(suggestedMonths); }}
-                    className="text-xs text-primary-lighter hover:text-primary underline underline-offset-2"
-                  >
-                    Reset to {suggestedMonths} (suggested)
-                  </button>
-                )}
               </div>
-              <p className="text-xs text-primary-lighter mt-1.5">
-                Adjust manually for bundle/discounted pricing (e.g. ₹500 for 2 months).
-              </p>
+
+              {noMonthCoverage ? (
+                <p className="text-xs text-orange-500 bg-orange-50 border border-orange-200 rounded-xl px-3 py-2">
+                  Payment will be recorded without covering any month.
+                </p>
+              ) : (
+                <>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => adjustMonths(-1)}
+                      disabled={numMonths <= 1}
+                      className="w-10 h-10 rounded-xl border border-primary-200 text-primary font-bold text-lg hover:bg-primary-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    >
+                      −
+                    </button>
+                    <input
+                      type="number"
+                      min="1"
+                      value={numMonths}
+                      onChange={handleMonthsInput}
+                      {...blockNumberSpin}
+                      className="input-field w-16 text-center font-bold"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => adjustMonths(1)}
+                      className="w-10 h-10 rounded-xl border border-primary-200 text-primary font-bold text-lg hover:bg-primary-50 transition-colors"
+                    >
+                      +
+                    </button>
+                    {monthsTouched && suggestedMonths !== numMonths && (
+                      <button
+                        type="button"
+                        onClick={() => { setMonthsTouched(false); setNumMonths(suggestedMonths); }}
+                        className="text-xs text-primary-lighter hover:text-primary underline underline-offset-2"
+                      >
+                        Reset to {suggestedMonths} (suggested)
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-xs text-primary-lighter mt-1.5">
+                    Adjust manually for bundle/discounted pricing (e.g. ₹500 for 2 months).
+                  </p>
+                </>
+              )}
             </div>
 
             {/* ── Live preview — shows once amount is entered ── */}
