@@ -37,6 +37,7 @@ export default function PaymentsPage() {
   const [preset, setPreset] = useState(2);
   const [customStart, setCustomStart] = useState('');
   const [customEnd, setCustomEnd] = useState('');
+  const [mode, setMode] = useState('all');
 
   const fetchPayments = useCallback(async () => {
     setLoading(true);
@@ -48,14 +49,14 @@ export default function PaymentsPage() {
         dateRange = getDateRange(PRESETS[preset].days);
       }
       const { data } = await api.get('/payments', {
-        params: { page, ...dateRange },
+        params: { page, ...dateRange, ...(mode !== 'all' && { mode }) },
       });
       setPayments(data.payments);
       setPagination(data.pagination);
       setTotalAmount(data.totalAmount || 0);
     } catch { toast.error('Failed to load payments'); }
     setLoading(false);
-  }, [page, preset, customStart, customEnd]);
+  }, [page, preset, customStart, customEnd, mode]);
 
   useEffect(() => { fetchPayments(); }, [fetchPayments]);
 
@@ -104,6 +105,30 @@ export default function PaymentsPage() {
             />
           </>
         )}
+
+        <div className="h-5 w-px bg-primary-100 mx-1" />
+
+        {[
+          { value: 'all', label: 'All' },
+          { value: 'cash', label: '💵 Cash' },
+          { value: 'online', label: '🌐 Online' },
+        ].map(m => (
+          <button
+            key={m.value}
+            onClick={() => { setMode(m.value); setPage(1); }}
+            className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+              mode === m.value
+                ? m.value === 'cash'
+                  ? 'bg-green-600 text-white shadow-sm'
+                  : m.value === 'online'
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'bg-primary text-white shadow-sm'
+                : 'bg-primary-50 text-primary hover:bg-primary-100'
+            }`}
+          >
+            {m.label}
+          </button>
+        ))}
       </div>
 
       {/* Table */}
