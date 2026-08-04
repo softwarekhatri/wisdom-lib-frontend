@@ -53,19 +53,14 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     const load = async () => {
       try {
-        const [studentsRes, paymentsRes, reportRes, duesRes] = await Promise.all([
-          api.get('/students?page=1'),
-          api.get('/payments?page=1'),
-          api.get('/reports/payments'),
-          api.get('/reports/dues?page=1'),
-        ]);
+        const { data } = await api.get('/reports/dashboard');
         setStats({
-          totalStudents: studentsRes.data.pagination.total,
-          monthPayments: reportRes.data.summary?.totalAmount || 0,
-          studentsWithDues: duesRes.data.pagination.total,
+          totalStudents: data.totalStudents,
+          monthPayments: data.monthPayments?.total || 0,
+          studentsWithDues: data.studentsWithDues,
         });
-        setRecentPayments(paymentsRes.data.payments.slice(0, 5));
-        setDueSoon(duesRes.data.students.slice(0, 4));
+        setRecentPayments(data.recentPayments || []);
+        setDueSoon(data.dueStudents || []);
       } catch {}
       setLoading(false);
     };

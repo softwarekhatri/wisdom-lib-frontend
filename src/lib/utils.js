@@ -8,7 +8,7 @@ import {
 
 // Returns YYYY-MM-DD in LOCAL time — avoids UTC offset shifting the date (e.g. IST midnight = prev day in UTC)
 export const toLocalDateStr = (date) =>
-  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 
 export const MONTH_NAMES = [
   "January",
@@ -185,12 +185,16 @@ export const getPaymentRecordedWhatsAppUrl = (payment) => {
   else if (num.startsWith("0") && num.length === 11) num = "91" + num.slice(1);
 
   const dateStr = payment.receivedDate
-    ? new Date(payment.receivedDate).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })
+    ? new Date(payment.receivedDate).toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      })
     : "today";
   const modeLabel = payment.mode === "online" ? "Online" : "Cash";
 
   const msg =
-    `Hi ${student.fullName || "there"}! 👋\n\n` +
+    `Hi ${student.fullName || "there"}!\n\n` +
     `Your payment has been recorded at *Wisdom Library*.\n\n` +
     `*Amount Paid:* ₹${payment.amount}\n` +
     `*Payment Mode:* ${modeLabel}\n` +
