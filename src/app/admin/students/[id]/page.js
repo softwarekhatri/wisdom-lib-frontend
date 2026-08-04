@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '@/lib/api';
-import { formatDate, formatCurrency, getPaymentStatus, MONTH_NAMES, photoUrl, getWhatsAppUrl, getAdmissionWhatsAppUrl, BATCHES, SHIFT_FEES, blockNumberSpin } from '@/lib/utils';
+import { formatDate, formatCurrency, getPaymentStatus, MONTH_NAMES, photoUrl, getWhatsAppUrl, getAdmissionWhatsAppUrl, getPaymentRecordedWhatsAppUrl, BATCHES, SHIFT_FEES, blockNumberSpin } from '@/lib/utils';
 import StudentAvatar from '@/components/StudentAvatar';
 
 const WhatsAppIcon = ({ size = 16 }) => (
@@ -512,13 +512,25 @@ export default function StudentDetailPage() {
                           <td className="px-5 py-3.5 text-xs text-primary-lighter">
                             {p.monthsCovered?.map(mc => `${MONTH_NAMES[mc.month - 1].slice(0, 3)} ${mc.year}`).join(', ') || '—'}
                           </td>
-                          <td className="px-5 py-3.5 text-right">
-                            {canModify && (
-                              <button onClick={() => setPendingDeletePayment(p._id)}
-                                className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 transition-all">
-                                <Trash2 size={14} />
-                              </button>
-                            )}
+                          <td className="px-5 py-3.5">
+                            <div className="flex items-center justify-end gap-1.5">
+                              {(() => {
+                                const waUrl = getPaymentRecordedWhatsAppUrl({ ...p, student });
+                                return waUrl ? (
+                                  <a href={waUrl} target="_blank" rel="noopener noreferrer"
+                                    title="Send payment confirmation via WhatsApp"
+                                    className="flex items-center justify-center w-7 h-7 rounded-lg bg-green-500 text-white hover:bg-green-600 active:scale-95 transition-all">
+                                    <WhatsAppIcon size={13} />
+                                  </a>
+                                ) : null;
+                              })()}
+                              {canModify && (
+                                <button onClick={() => setPendingDeletePayment(p._id)}
+                                  className="p-1.5 rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 transition-all">
+                                  <Trash2 size={14} />
+                                </button>
+                              )}
+                            </div>
                           </td>
                         </tr>
                       )

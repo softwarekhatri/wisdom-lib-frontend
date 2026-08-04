@@ -176,6 +176,31 @@ export const getWhatsAppUrl = (student, nextDueDate, libraryFees) => {
   return `https://wa.me/${num}?text=${encodeURIComponent(msg)}`;
 };
 
+export const getPaymentRecordedWhatsAppUrl = (payment) => {
+  const student = payment.student || {};
+  const rawPhone = student.whatsappNumber || student.mobile;
+  if (!rawPhone) return null;
+  let num = rawPhone.replace(/\D/g, "");
+  if (num.length === 10) num = "91" + num;
+  else if (num.startsWith("0") && num.length === 11) num = "91" + num.slice(1);
+
+  const dateStr = payment.receivedDate
+    ? new Date(payment.receivedDate).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })
+    : "today";
+  const modeLabel = payment.mode === "online" ? "Online" : "Cash";
+
+  const msg =
+    `Hi ${student.fullName || "there"}! 👋\n\n` +
+    `Your payment has been recorded at *Wisdom Library*.\n\n` +
+    `*Amount Paid:* ₹${payment.amount}\n` +
+    `*Payment Mode:* ${modeLabel}\n` +
+    `*Date:* ${dateStr}\n\n` +
+    `Thank you for your payment!\n` +
+    `*Wisdom Library*`;
+
+  return `https://wa.me/${num}?text=${encodeURIComponent(msg)}`;
+};
+
 export const clsx = (...classes) => classes.filter(Boolean).join(" ");
 
 export const apiBase =
