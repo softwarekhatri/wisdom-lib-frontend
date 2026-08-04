@@ -27,8 +27,8 @@ export default function Navbar() {
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-        scrolled
-          ? "py-3 bg-primary/95 backdrop-blur-xl shadow-2xl"
+        scrolled || menuOpen
+          ? "py-3 bg-primary shadow-2xl"
           : "py-5 bg-transparent"
       }`}
     >
@@ -83,8 +83,9 @@ export default function Navbar() {
 
         {/* Mobile menu toggle */}
         <button
-          className="md:hidden text-white p-2"
+          className="md:hidden text-white p-2 rounded-lg hover:bg-white/10 transition-colors"
           onClick={() => setMenuOpen(!menuOpen)}
+          aria-label="Toggle menu"
         >
           {menuOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
@@ -97,7 +98,7 @@ export default function Navbar() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="md:hidden bg-primary-dark/98 backdrop-blur-xl border-t border-white/10"
+            className="md:hidden bg-primary-dark border-t border-white/10"
           >
             <div className="px-6 py-6 flex flex-col gap-4">
               {links.map((l) => (

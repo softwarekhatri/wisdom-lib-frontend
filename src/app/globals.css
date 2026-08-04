@@ -19,11 +19,16 @@
 
 * { box-sizing: border-box; scroll-behavior: smooth; }
 
+html {
+  overflow-x: hidden;
+}
+
 body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   background-color: var(--cream);
   color: var(--primary);
   overflow-x: hidden;
+  max-width: 100vw;
 }
 
 /* ── Scrollbar ── */

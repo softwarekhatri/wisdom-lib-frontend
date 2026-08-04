@@ -124,7 +124,7 @@ export default function Hero() {
   return (
     <section
       ref={sectionRef}
-      className="relative min-h-screen flex items-center justify-center overflow-hidden hero-bg"
+      className="relative min-h-screen flex items-center justify-center overflow-hidden hero-bg w-full max-w-full"
     >
       {/* Cinematic overlay */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(201,161,94,0.08)_0%,transparent_70%)]" />
@@ -164,7 +164,7 @@ export default function Hero() {
 
       {/* Floating decorative orbs */}
       <motion.div
-        className="absolute top-1/4 left-10 w-72 h-72 rounded-full blur-3xl pointer-events-none"
+        className="absolute top-1/4 left-0 w-64 h-64 rounded-full blur-3xl pointer-events-none"
         style={{
           background:
             "radial-gradient(circle, rgba(201,161,94,0.15), transparent)",
@@ -173,7 +173,7 @@ export default function Hero() {
         transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
       />
       <motion.div
-        className="absolute bottom-1/4 right-10 w-96 h-96 rounded-full blur-3xl pointer-events-none"
+        className="absolute bottom-1/4 right-0 w-72 h-72 rounded-full blur-3xl pointer-events-none"
         style={{
           background:
             "radial-gradient(circle, rgba(67,51,44,0.4), transparent)",

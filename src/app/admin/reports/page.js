@@ -288,11 +288,11 @@ export default function ReportsPage() {
               </button>
             ))}
             {preset === 'custom' && (
-              <>
-                <input type="date" value={customStart} onChange={e => setCustomStart(e.target.value)} className="input-field w-auto text-sm py-2" />
-                <span className="text-primary-lighter text-sm">to</span>
-                <input type="date" value={customEnd} onChange={e => setCustomEnd(e.target.value)} className="input-field w-auto text-sm py-2" />
-              </>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto">
+                <input type="date" value={customStart} onChange={e => setCustomStart(e.target.value)} className="input-field w-full sm:w-auto text-sm py-2" />
+                <span className="text-primary-lighter text-sm hidden sm:block">to</span>
+                <input type="date" value={customEnd} onChange={e => setCustomEnd(e.target.value)} className="input-field w-full sm:w-auto text-sm py-2" />
+              </div>
             )}
           </div>
 
@@ -413,11 +413,11 @@ export default function ReportsPage() {
                 </button>
               ))}
               {finPreset === 'custom' && (
-                <>
-                  <input type="date" value={finCustomStart} onChange={e => setFinCustomStart(e.target.value)} className="input-field w-auto text-sm py-2" />
-                  <span className="text-primary-lighter text-sm self-center">to</span>
-                  <input type="date" value={finCustomEnd} onChange={e => setFinCustomEnd(e.target.value)} className="input-field w-auto text-sm py-2" />
-                </>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto">
+                  <input type="date" value={finCustomStart} onChange={e => setFinCustomStart(e.target.value)} className="input-field w-full sm:w-auto text-sm py-2" />
+                  <span className="text-primary-lighter text-sm hidden sm:block">to</span>
+                  <input type="date" value={finCustomEnd} onChange={e => setFinCustomEnd(e.target.value)} className="input-field w-full sm:w-auto text-sm py-2" />
+                </div>
               )}
             </div>
             <button
@@ -666,20 +666,20 @@ export default function ReportsPage() {
               </button>
             </div>
             {compMode === 'custom' && (
-              <>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-medium text-primary-lighter whitespace-nowrap">Period 1</span>
-                  <input type="date" value={compP1Start} onChange={e => setCompP1Start(e.target.value)} className="input-field w-auto text-sm py-2" />
-                  <span className="text-primary-lighter text-sm">to</span>
-                  <input type="date" value={compP1End} onChange={e => setCompP1End(e.target.value)} className="input-field w-auto text-sm py-2" />
+              <div className="flex flex-col gap-3 w-full sm:w-auto">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                  <span className="text-xs font-medium text-primary-lighter whitespace-nowrap w-14">Period 1</span>
+                  <input type="date" value={compP1Start} onChange={e => setCompP1Start(e.target.value)} className="input-field w-full sm:w-auto text-sm py-2" />
+                  <span className="text-primary-lighter text-sm hidden sm:block">to</span>
+                  <input type="date" value={compP1End} onChange={e => setCompP1End(e.target.value)} className="input-field w-full sm:w-auto text-sm py-2" />
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-medium text-primary-lighter whitespace-nowrap">Period 2</span>
-                  <input type="date" value={compP2Start} onChange={e => setCompP2Start(e.target.value)} className="input-field w-auto text-sm py-2" />
-                  <span className="text-primary-lighter text-sm">to</span>
-                  <input type="date" value={compP2End} onChange={e => setCompP2End(e.target.value)} className="input-field w-auto text-sm py-2" />
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                  <span className="text-xs font-medium text-primary-lighter whitespace-nowrap w-14">Period 2</span>
+                  <input type="date" value={compP2Start} onChange={e => setCompP2Start(e.target.value)} className="input-field w-full sm:w-auto text-sm py-2" />
+                  <span className="text-primary-lighter text-sm hidden sm:block">to</span>
+                  <input type="date" value={compP2End} onChange={e => setCompP2End(e.target.value)} className="input-field w-full sm:w-auto text-sm py-2" />
                 </div>
-              </>
+              </div>
             )}
           </div>
 
