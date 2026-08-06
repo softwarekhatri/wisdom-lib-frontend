@@ -1,71 +1,177 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
-import { Armchair, Search, Phone, User, ChevronRight, LayoutGrid, List, DoorOpen, Building2, Clock } from 'lucide-react';
+import {
+  Armchair, Search, Phone, User, ChevronRight, LayoutGrid, List,
+  DoorOpen, Building2, Clock, ChevronDown, Check, X,
+} from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '@/lib/api';
 import { BATCHES } from '@/lib/utils';
 
-function SeatCell({ seatNum, seatMap, selected, onClick }) {
-  const occupant = seatMap[seatNum];
-  const isBooked = !!occupant;
+// ── Multi-select batch filter ──────────────────────────────────────────────
+function BatchMultiSelect({ selectedBatches, onChange }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const close = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, []);
+
+  const toggle = (b) =>
+    onChange(selectedBatches.includes(b) ? selectedBatches.filter(x => x !== b) : [...selectedBatches, b]);
+
+  const label = selectedBatches.length === 0
+    ? 'All Batches'
+    : `${selectedBatches.length} batch${selectedBatches.length > 1 ? 'es' : ''} selected`;
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen(v => !v)}
+        className="input-field pl-9 w-auto min-w-[200px] flex items-center justify-between gap-2 text-left"
+      >
+        <Clock className="absolute left-3 top-1/2 -translate-y-1/2 text-primary-lighter w-4 h-4 pointer-events-none" />
+        <span className={selectedBatches.length ? 'text-primary font-medium' : 'text-primary-lighter'}>
+          {label}
+        </span>
+        <ChevronDown className={`w-4 h-4 text-primary-lighter transition-transform flex-shrink-0 ${open ? 'rotate-180' : ''}`} />
+      </button>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.12 }}
+            className="absolute top-full left-0 mt-1.5 bg-white border border-primary-100 rounded-xl shadow-lg z-20 py-1.5 min-w-[220px]"
+          >
+            {selectedBatches.length > 0 && (
+              <button
+                onClick={() => onChange([])}
+                className="w-full px-4 py-1.5 text-xs text-primary-lighter hover:text-primary flex items-center gap-1.5 hover:bg-primary-50"
+              >
+                <X className="w-3 h-3" /> Clear selection
+              </button>
+            )}
+            {BATCHES.map(b => {
+              const checked = selectedBatches.includes(b);
+              return (
+                <label key={b} className="flex items-center gap-3 px-4 py-2.5 hover:bg-primary-50 cursor-pointer select-none">
+                  <div
+                    className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
+                      checked ? 'bg-primary border-primary' : 'border-gray-300'
+                    }`}
+                  >
+                    {checked && <Check className="w-2.5 h-2.5 text-white" />}
+                  </div>
+                  <input type="checkbox" className="sr-only" checked={checked} onChange={() => toggle(b)} />
+                  <span className={`text-sm ${checked ? 'text-primary font-medium' : 'text-gray-600'}`}>{b}</span>
+                </label>
+              );
+            })}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+// ── Seat cell ──────────────────────────────────────────────────────────────
+// seatMap[n] is now an array of occupants (one per batch)
+function SeatCell({ seatNum, seatMap, selectedBatchCount, selected, onClick }) {
+  const occupants = seatMap[seatNum] || [];
+  const isBooked = occupants.length > 0;
+  // Partial = booked in some but not all selected batches
+  const isPartial = isBooked && selectedBatchCount > 1 && occupants.length < selectedBatchCount;
   const isGirl = seatNum >= 1 && seatNum <= 20;
+
+  let colorClass;
+  if (!isBooked) {
+    colorClass = 'bg-white border-dashed border-gray-300 text-gray-300 hover:border-primary-200 hover:text-primary-200';
+  } else if (isPartial) {
+    colorClass = 'bg-gradient-to-br from-amber-400 to-orange-500 border-amber-500 text-white shadow-sm shadow-amber-200';
+  } else {
+    colorClass = isGirl
+      ? 'bg-gradient-to-br from-pink-400 to-rose-500 border-pink-500 text-white shadow-sm shadow-pink-200'
+      : 'bg-gradient-to-br from-primary to-primary-dark border-primary-dark text-white shadow-sm shadow-primary/30';
+  }
+
+  const tooltipText = isBooked
+    ? `Seat ${seatNum} — ${occupants.map(o => `${o.fullName} (${o.batch})`).join(', ')}`
+    : `Seat ${seatNum} — Available`;
 
   return (
     <motion.button
       whileHover={{ scale: 1.1, y: -1 }}
       whileTap={{ scale: 0.95 }}
-      onClick={() => onClick(seatNum, occupant)}
-      title={isBooked ? `Seat ${seatNum} — ${occupant.fullName}` : `Seat ${seatNum} — Available`}
+      onClick={() => onClick(seatNum, occupants)}
+      title={tooltipText}
       className={[
         'w-14 h-14 rounded-xl flex flex-col items-center justify-center transition-all border-2',
-        isBooked
-          ? isGirl
-            ? 'bg-gradient-to-br from-pink-400 to-rose-500 border-pink-500 text-white shadow-sm shadow-pink-200'
-            : 'bg-gradient-to-br from-primary to-primary-dark border-primary-dark text-white shadow-sm shadow-primary/30'
-          : 'bg-white border-dashed border-gray-300 text-gray-300 hover:border-primary-200 hover:text-primary-200',
+        colorClass,
         selected ? 'ring-2 ring-amber-400 ring-offset-1 scale-105' : '',
       ].join(' ')}
     >
       <span className={`text-sm font-black leading-none ${isBooked ? 'text-white/90' : ''}`}>{seatNum}</span>
       {isBooked && (
         <span className="text-[8px] text-white/90 leading-none mt-1 max-w-[48px] truncate px-0.5">
-          {occupant.fullName?.split(' ')[0]}
+          {occupants.length > 1 ? `${occupants.length} shifts` : occupants[0].fullName?.split(' ')[0]}
         </span>
       )}
-      {!isBooked && (
-        <Armchair className="w-3.5 h-3.5 mt-1 opacity-40" />
-      )}
+      {!isBooked && <Armchair className="w-3.5 h-3.5 mt-1 opacity-40" />}
     </motion.button>
   );
 }
 
-function Col({ nums, seatMap, selected, onClick }) {
+function Col({ nums, seatMap, selectedBatchCount, selected, onClick }) {
   return (
     <div className="flex flex-col gap-1.5">
       {nums.map(n => (
-        <SeatCell key={n} seatNum={n} seatMap={seatMap} selected={selected === n} onClick={onClick} />
+        <SeatCell
+          key={n} seatNum={n} seatMap={seatMap} selectedBatchCount={selectedBatchCount}
+          selected={selected === n} onClick={onClick}
+        />
       ))}
     </div>
   );
 }
 
-function MapView({ seats, activeBatch }) {
+// ── Map view ───────────────────────────────────────────────────────────────
+function MapView({ seats, selectedBatches }) {
   const [selected, setSelected] = useState(null);
-  const [selectedInfo, setSelectedInfo] = useState(null);
+  const [selectedOccupants, setSelectedOccupants] = useState([]);
 
+  // Build seatMap: seatNum -> [occupant, ...] — filter by selectedBatches if any are picked
   const seatMap = {};
-  seats.forEach(s => { if (s.seatNumber) seatMap[Number(s.seatNumber)] = s; });
+  seats.forEach(s => {
+    if (!s.seatNumber) return;
+    if (selectedBatches.length > 0 && !selectedBatches.includes(s.batch)) return;
+    const num = Number(s.seatNumber);
+    if (!seatMap[num]) seatMap[num] = [];
+    seatMap[num].push(s);
+  });
 
-  const bookedCount = Object.keys(seatMap).length;
+  // When no batch is selected treat as single-batch so partial coloring doesn't apply
+  const selectedBatchCount = selectedBatches.length || 1;
+
   const totalSeats = 67;
+  const bookedSeatNums = Object.keys(seatMap).length;
+  const partialCount = selectedBatches.length > 1
+    ? Object.values(seatMap).filter(occs => occs.length < selectedBatches.length).length
+    : 0;
 
-  const handleClick = (num, occupant) => {
-    if (selected === num) { setSelected(null); setSelectedInfo(null); return; }
+  const handleClick = (num, occupants) => {
+    if (selected === num) { setSelected(null); setSelectedOccupants([]); return; }
     setSelected(num);
-    setSelectedInfo(occupant || null);
+    setSelectedOccupants(occupants || []);
   };
+
+  const primaryOccupant = selectedOccupants[0];
 
   return (
     <div className="space-y-4">
@@ -73,25 +179,37 @@ function MapView({ seats, activeBatch }) {
       <div className="flex flex-wrap gap-3 items-center">
         <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-lg">
           <div className="w-3 h-3 rounded bg-gradient-to-br from-primary to-primary-dark" />
-          <span className="text-xs font-medium text-primary">Boys · {seats.filter(s => s.seatNumber && Number(s.seatNumber) > 20).length} booked</span>
+          <span className="text-xs font-medium text-primary">
+            Boys · {Object.entries(seatMap).filter(([n]) => Number(n) > 20).length} booked
+          </span>
         </div>
         <div className="flex items-center gap-2 px-3 py-1.5 bg-pink-50 rounded-lg">
           <div className="w-3 h-3 rounded bg-gradient-to-br from-pink-400 to-rose-500" />
-          <span className="text-xs font-medium text-pink-600">Girls · {seats.filter(s => s.seatNumber && Number(s.seatNumber) <= 20).length} booked</span>
+          <span className="text-xs font-medium text-pink-600">
+            Girls · {Object.entries(seatMap).filter(([n]) => Number(n) <= 20).length} booked
+          </span>
         </div>
+        {partialCount > 0 && (
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-50 rounded-lg border border-amber-200">
+            <div className="w-3 h-3 rounded bg-gradient-to-br from-amber-400 to-orange-500" />
+            <span className="text-xs font-medium text-amber-700">{partialCount} partial (some shifts)</span>
+          </div>
+        )}
         <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-lg border border-dashed border-gray-200">
           <div className="w-3 h-3 rounded border-2 border-dashed border-gray-300" />
-          <span className="text-xs font-medium text-gray-400">{totalSeats - bookedCount} available</span>
+          <span className="text-xs font-medium text-gray-400">{totalSeats - bookedSeatNums} available</span>
         </div>
-        {activeBatch && (
+        {selectedBatches.length > 0 && (
           <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 border border-amber-200 rounded-lg">
             <Clock className="w-3 h-3 text-amber-600" />
-            <span className="text-xs font-medium text-amber-700">{activeBatch}</span>
+            <span className="text-xs font-medium text-amber-700">
+              {selectedBatches.length === 1 ? selectedBatches[0] : `${selectedBatches.length} batches`}
+            </span>
           </div>
         )}
         <div className="ml-auto text-xs text-primary-lighter font-medium">
-          {bookedCount}/{totalSeats} seats filled
-          {activeBatch ? ` (${activeBatch})` : ''}
+          {bookedSeatNums}/{totalSeats} seats filled
+          {selectedBatches.length > 0 ? ` (filtered)` : ''}
         </div>
       </div>
 
@@ -104,48 +222,100 @@ function MapView({ seats, activeBatch }) {
             exit={{ opacity: 0, height: 0 }}
             className="overflow-hidden"
           >
-            <div className="bg-white rounded-xl border border-primary-100 p-3 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-bold text-sm ${
-                  selectedInfo
-                    ? selected <= 20
-                      ? 'bg-gradient-to-br from-pink-400 to-rose-500 text-white'
-                      : 'bg-gradient-to-br from-primary to-primary-dark text-white'
-                    : 'bg-gray-100 text-gray-400'
-                }`}>
-                  {selected}
+            <div className="bg-white rounded-xl border border-primary-100 p-3">
+              {selectedOccupants.length === 0 ? (
+                /* Available */
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg flex items-center justify-center font-bold text-sm bg-gray-100 text-gray-400">
+                      {selected}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-400">Seat {selected}</p>
+                      <p className="text-xs text-gray-300">Available</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => { setSelected(null); setSelectedOccupants([]); }}
+                    className="text-gray-300 hover:text-gray-400 text-xs px-2 py-1 rounded"
+                  >✕</button>
                 </div>
-                {selectedInfo ? (
-                  <div>
-                    <p className="text-sm font-semibold text-primary">{selectedInfo.fullName}</p>
-                    <p className="text-xs text-primary-lighter">
-                      {selectedInfo.mobile}
-                      {selectedInfo.batch ? ` · ${selectedInfo.batch}` : ''}
-                    </p>
+              ) : selectedOccupants.length === 1 ? (
+                /* Single occupant */
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-bold text-sm ${
+                      selected <= 20
+                        ? 'bg-gradient-to-br from-pink-400 to-rose-500 text-white'
+                        : 'bg-gradient-to-br from-primary to-primary-dark text-white'
+                    }`}>
+                      {selected}
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-primary">{primaryOccupant.fullName}</p>
+                      <p className="text-xs text-primary-lighter">
+                        {primaryOccupant.mobile}
+                        {primaryOccupant.batch ? ` · ${primaryOccupant.batch}` : ''}
+                      </p>
+                    </div>
                   </div>
-                ) : (
-                  <div>
-                    <p className="text-sm font-medium text-gray-400">Seat {selected}</p>
-                    <p className="text-xs text-gray-300">Available</p>
+                  <div className="flex items-center gap-2">
+                    <Link
+                      href={`/admin/students/${primaryOccupant.studentId}`}
+                      className="text-xs font-medium text-primary flex items-center gap-1 hover:underline"
+                    >
+                      View profile <ChevronRight className="w-3.5 h-3.5" />
+                    </Link>
+                    <button
+                      onClick={() => { setSelected(null); setSelectedOccupants([]); }}
+                      className="text-gray-300 hover:text-gray-400 text-xs px-2 py-1 rounded"
+                    >✕</button>
                   </div>
-                )}
-              </div>
-              <div className="flex items-center gap-2">
-                {selectedInfo && (
-                  <Link
-                    href={`/admin/students/${selectedInfo.studentId}`}
-                    className="text-xs font-medium text-primary flex items-center gap-1 hover:underline"
-                  >
-                    View profile <ChevronRight className="w-3.5 h-3.5" />
-                  </Link>
-                )}
-                <button
-                  onClick={() => { setSelected(null); setSelectedInfo(null); }}
-                  className="text-gray-300 hover:text-gray-400 text-xs px-2 py-1 rounded"
-                >
-                  ✕
-                </button>
-              </div>
+                </div>
+              ) : (
+                /* Multiple occupants (multi-batch) */
+                <div>
+                  <div className="flex items-center justify-between mb-2.5">
+                    <div className="flex items-center gap-2">
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs ${
+                        selected <= 20
+                          ? 'bg-gradient-to-br from-pink-400 to-rose-500 text-white'
+                          : 'bg-gradient-to-br from-amber-400 to-orange-500 text-white'
+                      }`}>
+                        {selected}
+                      </div>
+                      <p className="text-sm font-semibold text-primary">
+                        Seat {selected} · {selectedOccupants.length} shifts booked
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => { setSelected(null); setSelectedOccupants([]); }}
+                      className="text-gray-300 hover:text-gray-400 text-xs px-2 py-1 rounded"
+                    >✕</button>
+                  </div>
+                  <div className="space-y-1.5">
+                    {selectedOccupants.map((occ, i) => (
+                      <div
+                        key={`${occ.studentId}-${i}`}
+                        className="flex items-center justify-between bg-primary-50/60 rounded-lg px-3 py-2"
+                      >
+                        <div>
+                          <p className="text-sm font-medium text-primary">{occ.fullName}</p>
+                          <p className="text-xs text-primary-lighter">
+                            {occ.batch}{occ.mobile ? ` · ${occ.mobile}` : ''}
+                          </p>
+                        </div>
+                        <Link
+                          href={`/admin/students/${occ.studentId}`}
+                          className="text-xs font-medium text-primary flex items-center gap-1 hover:underline flex-shrink-0"
+                        >
+                          View <ChevronRight className="w-3.5 h-3.5" />
+                        </Link>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </motion.div>
         )}
@@ -163,7 +333,10 @@ function MapView({ seats, activeBatch }) {
               <div className="text-[9px] font-bold text-stone-400 uppercase tracking-widest mb-1.5 pl-1">Back Wall</div>
               <div className="flex gap-1.5">
                 {[55,54,53,52,51,50,49,48,47,46,45].map(n => (
-                  <SeatCell key={n} seatNum={n} seatMap={seatMap} selected={selected === n} onClick={handleClick} />
+                  <SeatCell
+                    key={n} seatNum={n} seatMap={seatMap} selectedBatchCount={selectedBatchCount}
+                    selected={selected === n} onClick={handleClick}
+                  />
                 ))}
               </div>
             </div>
@@ -176,12 +349,18 @@ function MapView({ seats, activeBatch }) {
                 <div className="flex flex-col gap-1.5">
                   <div className="flex gap-1.5">
                     {[56,57,58,59,60,61].map(n => (
-                      <SeatCell key={n} seatNum={n} seatMap={seatMap} selected={selected === n} onClick={handleClick} />
+                      <SeatCell
+                        key={n} seatNum={n} seatMap={seatMap} selectedBatchCount={selectedBatchCount}
+                        selected={selected === n} onClick={handleClick}
+                      />
                     ))}
                   </div>
                   <div className="flex gap-1.5">
                     {[67,66,65,64,63,62].map(n => (
-                      <SeatCell key={n} seatNum={n} seatMap={seatMap} selected={selected === n} onClick={handleClick} />
+                      <SeatCell
+                        key={n} seatNum={n} seatMap={seatMap} selectedBatchCount={selectedBatchCount}
+                        selected={selected === n} onClick={handleClick}
+                      />
                     ))}
                   </div>
                 </div>
@@ -200,8 +379,8 @@ function MapView({ seats, activeBatch }) {
               <div>
                 <div className="text-[9px] font-bold text-pink-400 uppercase tracking-widest mb-1.5 text-center">Girls Section</div>
                 <div className="flex gap-1.5">
-                  <Col nums={[11,10,9,8,7,6,5,4,3,2,1]} seatMap={seatMap} selected={selected} onClick={handleClick} />
-                  <Col nums={[12,13,14,15,16,17,18,19,20]} seatMap={seatMap} selected={selected} onClick={handleClick} />
+                  <Col nums={[11,10,9,8,7,6,5,4,3,2,1]} seatMap={seatMap} selectedBatchCount={selectedBatchCount} selected={selected} onClick={handleClick} />
+                  <Col nums={[12,13,14,15,16,17,18,19,20]} seatMap={seatMap} selectedBatchCount={selectedBatchCount} selected={selected} onClick={handleClick} />
                 </div>
               </div>
             </div>
@@ -218,37 +397,31 @@ function MapView({ seats, activeBatch }) {
           {/* ── RIGHT WALL STRIP ── */}
           <div className="flex flex-col items-end border-l border-dashed border-primary-100 pl-5">
 
-            {/* Corner L-shape:
-                  44 goes down the right wall from backwall
-                  43 below 44
-                  then arm turns left: [39][40][41][42]  (42 at right wall) */}
             <div className="mb-3">
               <div className="text-[9px] font-bold text-primary-lighter uppercase tracking-widest mb-1.5 text-right">Corner</div>
               <div className="flex flex-col gap-1.5 items-end">
-                <SeatCell seatNum={44} seatMap={seatMap} selected={selected === 44} onClick={handleClick} />
-                <SeatCell seatNum={43} seatMap={seatMap} selected={selected === 43} onClick={handleClick} />
-                {/* Arm turns left: 39 is furthest left, 42 connects up to 43 */}
+                <SeatCell seatNum={44} seatMap={seatMap} selectedBatchCount={selectedBatchCount} selected={selected === 44} onClick={handleClick} />
+                <SeatCell seatNum={43} seatMap={seatMap} selectedBatchCount={selectedBatchCount} selected={selected === 43} onClick={handleClick} />
                 <div className="flex gap-1.5">
                   {[39,40,41,42].map(n => (
-                    <SeatCell key={n} seatNum={n} seatMap={seatMap} selected={selected === n} onClick={handleClick} />
+                    <SeatCell
+                      key={n} seatNum={n} seatMap={seatMap} selectedBatchCount={selectedBatchCount}
+                      selected={selected === n} onClick={handleClick}
+                    />
                   ))}
                 </div>
               </div>
             </div>
 
-            {/* Boys Block A + Block B — three columns together
-                  Block A  [26→21] | Block B-left [27→32] | Block B-right [38→33]
-                  27 is left of 38 (top), 32 is left of 33 (bottom) */}
             <div className="flex flex-col items-end flex-1">
               <div className="text-[9px] font-bold text-primary-lighter uppercase tracking-widest mb-1.5 text-right">Boys · Block A &amp; B</div>
               <div className="flex gap-1.5">
-                <Col nums={[26,25,24,23,22,21]} seatMap={seatMap} selected={selected} onClick={handleClick} />
-                <Col nums={[27,28,29,30,31,32]} seatMap={seatMap} selected={selected} onClick={handleClick} />
-                <Col nums={[38,37,36,35,34,33]} seatMap={seatMap} selected={selected} onClick={handleClick} />
+                <Col nums={[26,25,24,23,22,21]} seatMap={seatMap} selectedBatchCount={selectedBatchCount} selected={selected} onClick={handleClick} />
+                <Col nums={[27,28,29,30,31,32]} seatMap={seatMap} selectedBatchCount={selectedBatchCount} selected={selected} onClick={handleClick} />
+                <Col nums={[38,37,36,35,34,33]} seatMap={seatMap} selectedBatchCount={selectedBatchCount} selected={selected} onClick={handleClick} />
               </div>
             </div>
 
-            {/* Entrance label */}
             <div className="mt-3 pt-4 border-t border-dashed border-stone-200 w-full flex flex-col items-end gap-1">
               <div className="flex items-center gap-1.5 text-xs font-semibold text-green-700/70">
                 Entrance · Main Gate
@@ -263,12 +436,12 @@ function MapView({ seats, activeBatch }) {
   );
 }
 
+// ── Page ───────────────────────────────────────────────────────────────────
 export default function SeatMapPage() {
-  const [seats, setSeats] = useState([]);
   const [allSeats, setAllSeats] = useState([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState('map');
-  const [batch, setBatch] = useState('');
+  const [selectedBatches, setSelectedBatches] = useState([]);
   const [seatNumber, setSeatNumber] = useState('');
   const [debouncedSeat, setDebouncedSeat] = useState('');
 
@@ -280,22 +453,22 @@ export default function SeatMapPage() {
   const fetchSeats = useCallback(async () => {
     setLoading(true);
     try {
-      const params = {};
-      if (batch) params.batch = batch;
-      if (view === 'list' && debouncedSeat) params.seatNumber = debouncedSeat;
-      const { data } = await api.get('/students/seats', { params });
-      if (view === 'list') {
-        setSeats(data.seats);
-      } else {
-        setAllSeats(data.seats);
-      }
+      const { data } = await api.get('/students/seats');
+      setAllSeats(data.seats);
     } catch {
       toast.error('Failed to load seat map');
     }
     setLoading(false);
-  }, [view, batch, debouncedSeat]);
+  }, []);
 
   useEffect(() => { fetchSeats(); }, [fetchSeats]);
+
+  // Client-side filtering for list view
+  const seats = allSeats.filter(s => {
+    if (selectedBatches.length > 0 && !selectedBatches.includes(s.batch)) return false;
+    if (view === 'list' && debouncedSeat && !String(s.seatNumber || '').includes(debouncedSeat)) return false;
+    return true;
+  });
 
   const groupedByBatch = seats.reduce((acc, s) => {
     (acc[s.batch] ||= []).push(s);
@@ -315,18 +488,9 @@ export default function SeatMapPage() {
           </p>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
-          {/* Batch filter — visible in both views */}
-          <div className="relative">
-            <Clock className="absolute left-3 top-1/2 -translate-y-1/2 text-primary-lighter w-4 h-4 pointer-events-none" />
-            <select
-              value={batch}
-              onChange={e => setBatch(e.target.value)}
-              className="input-field pl-9 w-auto min-w-[170px]"
-            >
-              <option value="">All Batches</option>
-              {BATCHES.map(b => <option key={b} value={b}>{b}</option>)}
-            </select>
-          </div>
+          {/* Multi-select batch filter */}
+          <BatchMultiSelect selectedBatches={selectedBatches} onChange={setSelectedBatches} />
+
           {/* View toggle */}
           <div className="flex items-center gap-1 bg-primary-50 rounded-xl p-1">
             <button
@@ -371,7 +535,7 @@ export default function SeatMapPage() {
           ))}
         </div>
       ) : view === 'map' ? (
-        <MapView seats={allSeats} activeBatch={batch} />
+        <MapView seats={allSeats} selectedBatches={selectedBatches} />
       ) : seats.length === 0 ? (
         <div className="text-center py-16 bg-white rounded-2xl border border-primary-100">
           <Armchair className="w-12 h-12 text-primary-lighter mx-auto mb-3" />
