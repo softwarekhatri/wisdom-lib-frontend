@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '@/lib/api';
-import { formatDate, formatCurrency, getPaymentStatus, MONTH_NAMES, photoUrl, getWhatsAppUrl, getAdmissionWhatsAppUrl, getPaymentRecordedWhatsAppUrl, BATCHES, SHIFT_FEES, blockNumberSpin } from '@/lib/utils';
+import { formatDate, formatCurrency, getPaymentStatus, MONTH_NAMES, photoUrl, getWhatsAppUrl, getAdmissionWhatsAppUrl, getPaymentRecordedWhatsAppUrl, BATCHES, SHIFT_FEES, NIGHT_SHIFT, NIGHT_SHIFT_FEE, computeStandardFee, blockNumberSpin } from '@/lib/utils';
 import StudentAvatar from '@/components/StudentAvatar';
 
 const WhatsAppIcon = ({ size = 16 }) => (
@@ -25,6 +25,7 @@ import { useAuth } from '@/contexts/AuthContext';
 export default function StudentDetailPage() {
   const { user } = useAuth();
   const canModify = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
+  const canPay = user?.role === 'MANAGER' || canModify; // VIEWER excluded
   const { id } = useParams();
   const router = useRouter();
   const fetchedFor = useRef(null);
@@ -71,11 +72,11 @@ export default function StudentDetailPage() {
     setLoading(false);
   };
 
-  // Auto-suggest libraryFees based on batch count when editing, unless admin changed it manually.
+  // Auto-suggest libraryFees based on selected batches when editing, unless admin changed it manually.
   useEffect(() => {
     if (!editing || feeTouched) return;
-    const count = seatAssignments.filter((r) => r.batch).length;
-    const standard = SHIFT_FEES[count];
+    const selectedBatches = seatAssignments.filter((r) => r.batch).map((r) => r.batch);
+    const standard = computeStandardFee(selectedBatches);
     if (standard) setForm((f) => ({ ...f, libraryFees: standard }));
   }, [seatAssignments, editing, feeTouched]);
 
@@ -200,10 +201,12 @@ export default function StudentDetailPage() {
                   Edit
                 </button>
               )}
-              <button onClick={() => setShowPaymentModal(true)} className="btn-primary flex items-center gap-2 text-sm px-4 py-2">
-                <Plus size={16} />
-                Add Payment
-              </button>
+              {canPay && (
+                <button onClick={() => setShowPaymentModal(true)} className="btn-primary flex items-center gap-2 text-sm px-4 py-2">
+                  <Plus size={16} />
+                  Add Payment
+                </button>
+              )}
             </>
           ) : (
             <>
@@ -263,7 +266,7 @@ export default function StudentDetailPage() {
                 {[
                   { icon: Hash, label: 'Username', value: student.username || '—', copyable: true },
                   { icon: Calendar, label: 'Joined', value: formatDate(student.admissionDate) },
-                  { icon: IndianRupee, label: 'Fees', value: `${formatCurrency(student.libraryFees)}/mo${SHIFT_FEES[student.seatAssignments?.length] && SHIFT_FEES[student.seatAssignments?.length] !== student.libraryFees ? ` (standard: ${formatCurrency(SHIFT_FEES[student.seatAssignments?.length])})` : ''}` },
+                  { icon: IndianRupee, label: 'Fees', value: (() => { const std = computeStandardFee((student.seatAssignments || []).map(a => a.batch)); return `${formatCurrency(student.libraryFees)}/mo${std && std !== student.libraryFees ? ` (standard: ${formatCurrency(std)})` : ''}`; })() },
                   { icon: Phone, label: 'Mobile', value: student.mobile || '—' },
                   { icon: Phone, label: 'WhatsApp', value: student.whatsappNumber || student.mobile || '—' },
                   { icon: Mail, label: 'Email', value: student.email || '—' },
@@ -309,10 +312,9 @@ export default function StudentDetailPage() {
                 </div>
               </div>
 
-              {/* WhatsApp buttons */}
-              {(() => {
-                const shiftCount = student.seatAssignments?.length || 1;
-                const effectiveFee = SHIFT_FEES[shiftCount] || student.libraryFees;
+              {/* WhatsApp buttons — hidden for VIEWER */}
+              {canPay && (() => {
+                const effectiveFee = computeStandardFee((student.seatAssignments || []).map(a => a.batch)) || student.libraryFees;
                 const waUrl = getWhatsAppUrl(student, student.nextDueDate, effectiveFee);
                 const admUrl = getAdmissionWhatsAppUrl(student);
                 return (waUrl || admUrl) ? (
@@ -386,13 +388,23 @@ export default function StudentDetailPage() {
                     onChange={e => { setForm(f => ({ ...f, libraryFees: e.target.value })); setFeeTouched(true); }}
                     {...blockNumberSpin} className="input-field" />
                   {(() => {
-                    const count = seatAssignments.filter((r) => r.batch).length;
-                    const standard = SHIFT_FEES[count];
-                    if (!count || !standard) return null;
+                    const selectedBatches = seatAssignments.filter((r) => r.batch).map((r) => r.batch);
+                    const standard = computeStandardFee(selectedBatches);
+                    if (!selectedBatches.length || !standard) return null;
+                    const hasNight = selectedBatches.includes(NIGHT_SHIFT);
+                    const dayCount = selectedBatches.filter((b) => b !== NIGHT_SHIFT).length;
+                    let hint;
+                    if (hasNight && dayCount > 0) {
+                      hint = `Night ₹${NIGHT_SHIFT_FEE} + ${dayCount} day shift${dayCount > 1 ? 's' : ''} ₹${SHIFT_FEES[dayCount]} = ${formatCurrency(standard)}`;
+                    } else if (hasNight) {
+                      hint = `Night shift standard: ${formatCurrency(standard)}`;
+                    } else {
+                      hint = `Standard for ${dayCount} shift${dayCount > 1 ? 's' : ''}: ${formatCurrency(standard)}`;
+                    }
                     const isCustom = feeTouched && parseFloat(form.libraryFees) !== standard;
                     return (
                       <p className="text-xs text-primary-lighter mt-1">
-                        Standard for {count} shift{count !== 1 ? 's' : ''}: <strong className="text-primary">{formatCurrency(standard)}</strong>
+                        {hint}
                         {isCustom && (
                           <button type="button"
                             onClick={() => { setForm(f => ({ ...f, libraryFees: standard })); setFeeTouched(false); }}
@@ -514,7 +526,7 @@ export default function StudentDetailPage() {
                           </td>
                           <td className="px-5 py-3.5">
                             <div className="flex items-center justify-end gap-1.5">
-                              {(() => {
+                              {canPay && (() => {
                                 const waUrl = getPaymentRecordedWhatsAppUrl({ ...p, student });
                                 return waUrl ? (
                                   <a href={waUrl} target="_blank" rel="noopener noreferrer"

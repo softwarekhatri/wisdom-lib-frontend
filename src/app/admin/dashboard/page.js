@@ -6,6 +6,7 @@ import { Users, CreditCard, AlertTriangle, ChevronRight } from 'lucide-react';
 import api from '@/lib/api';
 import { formatCurrency, formatDate, photoUrl, getWhatsAppUrl } from '@/lib/utils';
 import StudentAvatar from '@/components/StudentAvatar';
+import { useAuth } from '@/contexts/AuthContext';
 
 const WhatsAppIcon = ({ size = 14 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
@@ -44,6 +45,8 @@ function StatCard({ title, value, icon: Icon, color, href, loading }) {
 }
 
 export default function AdminDashboardPage() {
+  const { user } = useAuth();
+  const canPay = user?.role === 'MANAGER' || user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
   const [stats, setStats] = useState(null);
   const [recentPayments, setRecentPayments] = useState([]);
   const [dueSoon, setDueSoon] = useState([]);
@@ -184,25 +187,27 @@ export default function AdminDashboardPage() {
                       )}
                     </div>
                   </div>
-                  <div className="flex-shrink-0 flex items-center gap-1.5">
-                    {(() => {
-                      const waUrl = getWhatsAppUrl(s, s.dueDate, s.libraryFees);
-                      return waUrl ? (
-                        <a href={waUrl} target="_blank" rel="noopener noreferrer"
-                          className="flex items-center justify-center w-7 h-7 rounded-lg bg-green-500 text-white hover:bg-green-600 active:scale-95 transition-all shadow-sm"
-                          title="Send WhatsApp reminder">
-                          <WhatsAppIcon size={13} />
-                        </a>
-                      ) : null;
-                    })()}
-                    <button
-                      onClick={() => setPayStudent(s)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gold text-primary-dark text-xs font-bold hover:bg-gold-light active:scale-95 transition-all shadow-sm"
-                    >
-                      <CreditCard className="w-3 h-3" />
-                      Pay
-                    </button>
-                  </div>
+                  {canPay && (
+                    <div className="flex-shrink-0 flex items-center gap-1.5">
+                      {(() => {
+                        const waUrl = getWhatsAppUrl(s, s.dueDate, s.libraryFees);
+                        return waUrl ? (
+                          <a href={waUrl} target="_blank" rel="noopener noreferrer"
+                            className="flex items-center justify-center w-7 h-7 rounded-lg bg-green-500 text-white hover:bg-green-600 active:scale-95 transition-all shadow-sm"
+                            title="Send WhatsApp reminder">
+                            <WhatsAppIcon size={13} />
+                          </a>
+                        ) : null;
+                      })()}
+                      <button
+                        onClick={() => setPayStudent(s)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gold text-primary-dark text-xs font-bold hover:bg-gold-light active:scale-95 transition-all shadow-sm"
+                      >
+                        <CreditCard className="w-3 h-3" />
+                        Pay
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

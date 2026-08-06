@@ -23,6 +23,8 @@ import { useAuth } from '@/contexts/AuthContext';
 export default function StudentsPage() {
   const { user } = useAuth();
   const canModify = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
+  const canAdmit = user?.role === 'MANAGER' || canModify;
+  const canPay = canAdmit; // MANAGER, ADMIN, SUPER_ADMIN — not VIEWER
   const [students, setStudents] = useState([]);
   const [pagination, setPagination] = useState(null);
   const [search, setSearch] = useState('');
@@ -87,13 +89,15 @@ export default function StudentsPage() {
             {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
             Export Excel
           </button>
-          <button
-            onClick={() => setShowAdmission(true)}
-            className="btn-primary flex items-center gap-2 w-fit"
-          >
-            <UserPlus className="w-5 h-5" />
-            Admit Student
-          </button>
+          {canAdmit && (
+            <button
+              onClick={() => setShowAdmission(true)}
+              className="btn-primary flex items-center gap-2 w-fit"
+            >
+              <UserPlus className="w-5 h-5" />
+              Admit Student
+            </button>
+          )}
         </div>
       </div>
 
@@ -120,9 +124,11 @@ export default function StudentsPage() {
         <div className="text-center py-16 bg-white rounded-2xl border border-primary-100">
           <User className="w-12 h-12 text-primary-lighter mx-auto mb-3" />
           <p className="text-primary-lighter">No students found</p>
-          <button onClick={() => setShowAdmission(true)} className="btn-primary mt-4">
-            Admit First Student
-          </button>
+          {canAdmit && (
+            <button onClick={() => setShowAdmission(true)} className="btn-primary mt-4">
+              Admit First Student
+            </button>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -198,16 +204,18 @@ export default function StudentsPage() {
               })()}
 
               {/* Actions */}
-              <div className={`px-4 py-3 grid gap-1.5 ${canModify ? 'grid-cols-4' : 'grid-cols-3'}`}>
-                <button
-                  onClick={() => setPayStudent(s)}
-                  className="flex items-center justify-center gap-1 py-2.5 rounded-xl bg-gold text-primary-dark text-xs font-bold hover:bg-gold-light active:scale-95 transition-all shadow-sm"
-                >
-                  <CreditCard className="w-3.5 h-3.5" />
-                  Pay
-                </button>
+              <div className={`px-4 py-3 grid gap-1.5 ${canModify ? 'grid-cols-4' : canPay ? 'grid-cols-3' : 'grid-cols-1'}`}>
+                {canPay && (
+                  <button
+                    onClick={() => setPayStudent(s)}
+                    className="flex items-center justify-center gap-1 py-2.5 rounded-xl bg-gold text-primary-dark text-xs font-bold hover:bg-gold-light active:scale-95 transition-all shadow-sm"
+                  >
+                    <CreditCard className="w-3.5 h-3.5" />
+                    Pay
+                  </button>
+                )}
 
-                {(() => {
+                {canPay && (() => {
                   const waUrl = getWhatsAppUrl(s, s.nextDueDate, s.libraryFees);
                   return waUrl ? (
                     <a href={waUrl} target="_blank" rel="noopener noreferrer"

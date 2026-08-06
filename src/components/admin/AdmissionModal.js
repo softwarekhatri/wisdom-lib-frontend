@@ -32,6 +32,9 @@ import {
   formatCurrency,
   BATCHES,
   SHIFT_FEES,
+  NIGHT_SHIFT,
+  NIGHT_SHIFT_FEE,
+  computeStandardFee,
   blockNumberSpin,
 } from "@/lib/utils";
 import { addMonths, addDays, format } from "date-fns";
@@ -77,12 +80,12 @@ export default function AdmissionModal({ onClose, onSuccess }) {
   const [feeTouched, setFeeTouched] = useState(false);
   const [whatsappSameAsMobile, setWhatsappSameAsMobile] = useState(false);
 
-  // Auto-fill libraryFees from standard rate when batch count changes,
+  // Auto-fill libraryFees from standard rate when batches change,
   // unless admin has manually overridden the fee field.
   useEffect(() => {
     if (feeTouched) return;
-    const count = seatAssignments.filter((r) => r.batch).length;
-    const standard = SHIFT_FEES[count];
+    const selectedBatches = seatAssignments.filter((r) => r.batch).map((r) => r.batch);
+    const standard = computeStandardFee(selectedBatches);
     if (standard) setStudentForm((f) => ({ ...f, libraryFees: String(standard) }));
   }, [seatAssignments, feeTouched]);
 
@@ -443,13 +446,23 @@ export default function AdmissionModal({ onClose, onSuccess }) {
                     className="input-field"
                   />
                   {(() => {
-                    const count = validBatchRows.length;
-                    const standard = SHIFT_FEES[count];
-                    if (!count || !standard) return null;
+                    const selectedBatches = validBatchRows.map((r) => r.batch);
+                    const standard = computeStandardFee(selectedBatches);
+                    if (!selectedBatches.length || !standard) return null;
+                    const hasNight = selectedBatches.includes(NIGHT_SHIFT);
+                    const dayCount = selectedBatches.filter((b) => b !== NIGHT_SHIFT).length;
+                    let hint;
+                    if (hasNight && dayCount > 0) {
+                      hint = `Night ₹${NIGHT_SHIFT_FEE} + ${dayCount} day shift${dayCount > 1 ? 's' : ''} ₹${SHIFT_FEES[dayCount]} = ${formatCurrency(standard)}`;
+                    } else if (hasNight) {
+                      hint = `Night shift standard: ${formatCurrency(standard)}`;
+                    } else {
+                      hint = `Standard for ${dayCount} shift${dayCount > 1 ? 's' : ''}: ${formatCurrency(standard)}`;
+                    }
                     const isCustom = feeTouched && parseFloat(studentForm.libraryFees) !== standard;
                     return (
                       <p className="text-xs text-primary-lighter mt-1">
-                        Standard for {count} shift{count !== 1 ? "s" : ""}: <strong className="text-primary">{formatCurrency(standard)}</strong>
+                        {hint}
                         {isCustom && (
                           <button type="button"
                             onClick={() => { setStudentForm((f) => ({ ...f, libraryFees: String(standard) })); setFeeTouched(false); }}

@@ -216,9 +216,13 @@ export const photoUrl = (photo) => {
   return /^https?:\/\//i.test(photo) ? photo : `${apiBase}${photo}`;
 };
 
-// Standard monthly fees by number of shifts. Index = shift count.
+// Standard monthly fees by number of day-shifts. Index = day-shift count.
 // Used across admission, edit, and payment forms to auto-suggest fees.
 export const SHIFT_FEES = { 1: 300, 2: 500, 3: 750, 4: 1000 };
+
+// Night shift is a special batch priced independently at a flat rate.
+export const NIGHT_SHIFT = "10 PM - 6 AM";
+export const NIGHT_SHIFT_FEE = 400;
 
 // Keep in sync with backend/src/utils/batches.js — add more here to extend.
 export const BATCHES = [
@@ -226,7 +230,16 @@ export const BATCHES = [
   "10 AM - 2 PM",
   "2 PM - 6 PM",
   "6 PM - 10 PM",
+  NIGHT_SHIFT,
 ];
+
+// Compute the standard fee for an array of batch strings.
+// Night shift contributes a flat 400; day shifts use SHIFT_FEES by count.
+export const computeStandardFee = (batches = []) => {
+  const hasNight = batches.includes(NIGHT_SHIFT);
+  const dayCount = batches.filter((b) => b !== NIGHT_SHIFT).length;
+  return (hasNight ? NIGHT_SHIFT_FEE : 0) + (SHIFT_FEES[dayCount] || 0);
+};
 
 // Attach to number inputs to stop mouse-wheel scroll and Up/Down arrow keys
 // from silently changing the value — easy to trigger by accident.

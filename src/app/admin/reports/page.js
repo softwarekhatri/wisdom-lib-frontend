@@ -13,6 +13,7 @@ import toast from 'react-hot-toast';
 import api from '@/lib/api';
 import { formatDate, formatCurrency, MONTH_NAMES, photoUrl, toLocalDateStr } from '@/lib/utils';
 import StudentAvatar from '@/components/StudentAvatar';
+import { useAuth } from '@/contexts/AuthContext';
 
 const CHART_COLORS = { primary: '#43332c', gold: '#c9a15e', light: '#9a7b6e', green: '#16a34a', red: '#dc2626' };
 
@@ -85,6 +86,8 @@ function CustomTooltip({ active, payload, label }) {
 }
 
 export default function ReportsPage() {
+  const { user } = useAuth();
+  const canManageExpenses = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
   const [activeTab, setActiveTab] = useState('payment');
   const [chartType, setChartType] = useState('area');
   const [preset, setPreset] = useState('month');
@@ -420,18 +423,20 @@ export default function ReportsPage() {
                 </div>
               )}
             </div>
-            <button
-              onClick={() => setShowAddExpense(v => !v)}
-              className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary/90 transition-all"
-            >
-              <Plus size={15} />
-              Add Expense
-            </button>
+            {canManageExpenses && (
+              <button
+                onClick={() => setShowAddExpense(v => !v)}
+                className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary/90 transition-all"
+              >
+                <Plus size={15} />
+                Add Expense
+              </button>
+            )}
           </div>
 
           {/* Add Expense Form */}
           <AnimatePresence>
-            {showAddExpense && (
+            {canManageExpenses && showAddExpense && (
               <motion.div
                 initial={{ opacity: 0, y: -8 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -625,15 +630,17 @@ export default function ReportsPage() {
                           <td className="px-5 py-3.5 text-primary-lighter">{exp.remarks || '—'}</td>
                           <td className="px-5 py-3.5 text-primary-lighter text-xs">{exp.createdBy?.fullName || '—'}</td>
                           <td className="px-2 py-3.5">
-                            <button
-                              onClick={() => handleDeleteExpense(exp._id)}
-                              disabled={deletingExpId === exp._id}
-                              className="w-7 h-7 flex items-center justify-center rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-all disabled:opacity-40"
-                            >
-                              {deletingExpId === exp._id
-                                ? <span className="w-3.5 h-3.5 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
-                                : <Trash2 size={14} />}
-                            </button>
+                            {canManageExpenses && (
+                              <button
+                                onClick={() => handleDeleteExpense(exp._id)}
+                                disabled={deletingExpId === exp._id}
+                                className="w-7 h-7 flex items-center justify-center rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-all disabled:opacity-40"
+                              >
+                                {deletingExpId === exp._id
+                                  ? <span className="w-3.5 h-3.5 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
+                                  : <Trash2 size={14} />}
+                              </button>
+                            )}
                           </td>
                         </tr>
                       ))}
