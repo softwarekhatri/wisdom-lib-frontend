@@ -28,6 +28,7 @@ export default function StudentsPage() {
   const [students, setStudents] = useState([]);
   const [pagination, setPagination] = useState(null);
   const [search, setSearch] = useState('');
+  const [activeFilter, setActiveFilter] = useState('all'); // 'all' | 'active' | 'inactive'
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [showAdmission, setShowAdmission] = useState(false);
@@ -43,13 +44,16 @@ export default function StudentsPage() {
   const fetchStudents = useCallback(async () => {
     setLoading(true);
     try {
-      const { data } = await api.get('/students', { params: { page, search: debouncedSearch } });
+      const params = { page, search: debouncedSearch };
+      if (activeFilter !== 'all') params.active = activeFilter === 'active';
+      const { data } = await api.get('/students', { params });
       setStudents(data.students);
       setPagination(data.pagination);
     } catch { toast.error('Failed to load students'); }
     setLoading(false);
-  }, [page, debouncedSearch]);
+  }, [page, debouncedSearch, activeFilter]);
 
+  useEffect(() => { setPage(1); }, [activeFilter]);
   useEffect(() => { fetchStudents(); }, [fetchStudents]);
 
   const handleExport = async () => {
@@ -101,16 +105,33 @@ export default function StudentsPage() {
         </div>
       </div>
 
-      {/* Search */}
-      <div className="relative mb-6">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-primary-lighter w-5 h-5" />
-        <input
-          type="text"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          placeholder="Search by name or mobile..."
-          className="input-field pl-12"
-        />
+      {/* Search + Filter */}
+      <div className="flex flex-col sm:flex-row gap-3 mb-6">
+        <div className="relative flex-1">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-primary-lighter w-5 h-5" />
+          <input
+            type="text"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search by name or mobile..."
+            className="input-field pl-12"
+          />
+        </div>
+        <div className="flex items-center gap-1 p-1 bg-primary-50 rounded-xl border border-primary-100">
+          {['all', 'active', 'inactive'].map(f => (
+            <button
+              key={f}
+              onClick={() => setActiveFilter(f)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium capitalize transition-all ${
+                activeFilter === f
+                  ? 'bg-white text-primary shadow-sm border border-primary-100'
+                  : 'text-primary-lighter hover:text-primary'
+              }`}
+            >
+              {f === 'all' ? 'All' : f === 'active' ? 'Active' : 'Inactive'}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Student grid */}
