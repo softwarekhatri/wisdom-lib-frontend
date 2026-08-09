@@ -81,6 +81,22 @@ function BatchMultiSelect({ selectedBatches, onChange }) {
   );
 }
 
+// Returns the earliest nextDueDate across an array of occupants, as a Date or null
+function earliestDue(occupants) {
+  const dates = occupants
+    .map(o => o.nextDueDate ? new Date(o.nextDueDate) : null)
+    .filter(Boolean);
+  if (!dates.length) return null;
+  return dates.reduce((min, d) => d < min ? d : min);
+}
+
+// Short format: "15 Aug"
+function fmtShort(date) {
+  if (!date) return null;
+  const d = new Date(date);
+  return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+}
+
 // ── Seat cell ──────────────────────────────────────────────────────────────
 // seatMap[n] is now an array of occupants (one per batch)
 function SeatCell({ seatNum, seatMap, selectedBatchCount, selected, onClick }) {
@@ -101,8 +117,11 @@ function SeatCell({ seatNum, seatMap, selectedBatchCount, selected, onClick }) {
       : 'bg-gradient-to-br from-primary to-primary-dark border-primary-dark text-white shadow-sm shadow-primary/30';
   }
 
+  const due = isBooked ? earliestDue(occupants) : null;
+  const dueShort = fmtShort(due);
+
   const tooltipText = isBooked
-    ? `Seat ${seatNum} — ${occupants.map(o => `${o.fullName} (${o.batch})`).join(', ')}`
+    ? `Seat ${seatNum} — ${occupants.map(o => `${o.fullName} (${o.batch})`).join(', ')}${due ? ` · Due: ${dueShort}` : ''}`
     : `Seat ${seatNum} — Available`;
 
   return (
@@ -118,7 +137,12 @@ function SeatCell({ seatNum, seatMap, selectedBatchCount, selected, onClick }) {
       ].join(' ')}
     >
       <span className={`text-sm font-black leading-none ${isBooked ? 'text-white/90' : ''}`}>{seatNum}</span>
-      {isBooked && (
+      {isBooked && dueShort && (
+        <span className="text-[8px] text-white/80 leading-none mt-0.5 max-w-[52px] truncate px-0.5">
+          {dueShort}
+        </span>
+      )}
+      {isBooked && !dueShort && (
         <span className="text-[8px] text-white/90 leading-none mt-1 max-w-[48px] truncate px-0.5">
           {occupants.length > 1 ? `${occupants.length} shifts` : occupants[0].fullName?.split(' ')[0]}
         </span>
@@ -257,6 +281,16 @@ function MapView({ seats, selectedBatches }) {
                         {primaryOccupant.mobile}
                         {primaryOccupant.batch ? ` · ${primaryOccupant.batch}` : ''}
                       </p>
+                      {primaryOccupant.nextDueDate && (() => {
+                        const days = Math.ceil((new Date(primaryOccupant.nextDueDate) - new Date()) / 86400000);
+                        const col = days < 0 ? 'text-red-600' : days <= 7 ? 'text-orange-500' : 'text-green-600';
+                        return (
+                          <p className={`text-xs font-semibold flex items-center gap-1 mt-0.5 ${col}`}>
+                            <Clock className="w-3 h-3" />
+                            Due: {new Date(primaryOccupant.nextDueDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          </p>
+                        );
+                      })()}
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -304,6 +338,16 @@ function MapView({ seats, selectedBatches }) {
                           <p className="text-xs text-primary-lighter">
                             {occ.batch}{occ.mobile ? ` · ${occ.mobile}` : ''}
                           </p>
+                          {occ.nextDueDate && (() => {
+                            const days = Math.ceil((new Date(occ.nextDueDate) - new Date()) / 86400000);
+                            const col = days < 0 ? 'text-red-600' : days <= 7 ? 'text-orange-500' : 'text-green-600';
+                            return (
+                              <p className={`text-xs font-semibold flex items-center gap-1 mt-0.5 ${col}`}>
+                                <Clock className="w-3 h-3" />
+                                Due: {new Date(occ.nextDueDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                              </p>
+                            );
+                          })()}
                         </div>
                         <Link
                           href={`/admin/students/${occ.studentId}`}
@@ -580,6 +624,16 @@ export default function SeatMapPage() {
                         )}
                       </div>
                     </div>
+                    {s.nextDueDate && (() => {
+                      const days = Math.ceil((new Date(s.nextDueDate) - new Date()) / 86400000);
+                      const col = days < 0 ? 'text-red-600 bg-red-50' : days <= 7 ? 'text-orange-600 bg-orange-50' : 'text-green-700 bg-green-50';
+                      return (
+                        <div className={`flex-shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold ${col}`}>
+                          <Clock className="w-3 h-3" />
+                          {new Date(s.nextDueDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </div>
+                      );
+                    })()}
                     <Link
                       href={`/admin/students/${s.studentId}`}
                       className="flex items-center gap-1 text-xs font-medium text-primary hover:text-primary-dark flex-shrink-0"
