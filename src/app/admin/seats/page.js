@@ -131,7 +131,7 @@ function SeatCell({ seatNum, seatMap, selectedBatchCount, selected, onClick }) {
       onClick={() => onClick(seatNum, occupants)}
       title={tooltipText}
       className={[
-        'w-14 h-14 rounded-xl flex flex-col items-center justify-center transition-all border-2',
+        'w-14 h-[72px] rounded-xl flex flex-col items-center justify-center py-1.5 transition-all border-2',
         colorClass,
         selected ? 'ring-2 ring-amber-400 ring-offset-1 scale-105' : '',
       ].join(' ')}
@@ -143,7 +143,7 @@ function SeatCell({ seatNum, seatMap, selectedBatchCount, selected, onClick }) {
         </span>
       )}
       {isBooked && dueShort && (
-        <span className="text-[8px] font-bold text-yellow-200 leading-none max-w-[52px] truncate px-0.5">
+        <span className="text-[8px] font-bold text-yellow-200 leading-normal mt-1 max-w-[52px] truncate px-0.5">
           {dueShort}
         </span>
       )}
