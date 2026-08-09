@@ -143,7 +143,7 @@ function SeatCell({ seatNum, seatMap, selectedBatchCount, selected, onClick }) {
         </span>
       )}
       {isBooked && dueShort && (
-        <span className="text-[7px] text-white/70 leading-none max-w-[52px] truncate px-0.5">
+        <span className="text-[8px] font-bold text-yellow-200 leading-none max-w-[52px] truncate px-0.5">
           {dueShort}
         </span>
       )}
