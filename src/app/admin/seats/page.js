@@ -137,14 +137,14 @@ function SeatCell({ seatNum, seatMap, selectedBatchCount, selected, onClick }) {
       ].join(' ')}
     >
       <span className={`text-sm font-black leading-none ${isBooked ? 'text-white/90' : ''}`}>{seatNum}</span>
-      {isBooked && dueShort && (
-        <span className="text-[8px] text-white/80 leading-none mt-0.5 max-w-[52px] truncate px-0.5">
-          {dueShort}
+      {isBooked && (
+        <span className="text-[8px] text-white/90 leading-none mt-0.5 max-w-[48px] truncate px-0.5">
+          {occupants.length > 1 ? `${occupants.length} shifts` : occupants[0].fullName?.split(' ')[0]}
         </span>
       )}
-      {isBooked && !dueShort && (
-        <span className="text-[8px] text-white/90 leading-none mt-1 max-w-[48px] truncate px-0.5">
-          {occupants.length > 1 ? `${occupants.length} shifts` : occupants[0].fullName?.split(' ')[0]}
+      {isBooked && dueShort && (
+        <span className="text-[7px] text-white/70 leading-none max-w-[52px] truncate px-0.5">
+          {dueShort}
         </span>
       )}
       {!isBooked && <Armchair className="w-3.5 h-3.5 mt-1 opacity-40" />}
