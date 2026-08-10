@@ -5,9 +5,10 @@ import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, LineChart, Line, Legend, PieChart, Pie, Cell
 } from 'recharts';
+import Link from 'next/link';
 import {
   TrendingUp, TrendingDown, Users, IndianRupee, Calendar,
-  ChevronLeft, ChevronRight, Filter, Plus, Trash2, X, Banknote, CreditCard,
+  ChevronLeft, ChevronRight, Filter, Plus, Trash2, X, Banknote, CreditCard, ExternalLink,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '@/lib/api';
@@ -380,8 +381,17 @@ export default function ReportsPage() {
                       <div>Last payment: <span className="text-primary font-medium">{s.lastPaymentDate ? formatDate(s.lastPaymentDate) : 'None'}</span></div>
                       <div>Paid upto: <span className={`font-medium ${s.hasDues ? 'text-red-600' : s.dueSoon ? 'text-orange-500' : 'text-green-600'}`}>{s.paidThroughDate ? formatDate(s.paidThroughDate, 'dd MMM yyyy') : '—'}</span></div>
                     </div>
-                    <div className={`mt-3 text-xs font-semibold px-3 py-1.5 rounded-lg text-center ${s.hasDues ? 'bg-red-100 text-red-700' : 'bg-orange-100 text-orange-700'}`}>
-                      {s.hasDues ? '⚠️ Overdue' : `⏰ Due in ${s.daysUntilDue} day${s.daysUntilDue !== 1 ? 's' : ''}`}
+                    <div className="mt-3 flex items-center gap-2">
+                      <div className={`flex-1 text-xs font-semibold px-3 py-1.5 rounded-lg text-center ${s.hasDues ? 'bg-red-100 text-red-700' : 'bg-orange-100 text-orange-700'}`}>
+                        {s.hasDues ? '⚠️ Overdue' : `⏰ Due in ${s.daysUntilDue} day${s.daysUntilDue !== 1 ? 's' : ''}`}
+                      </div>
+                      <Link
+                        href={`/admin/students/${s._id}`}
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary-50 text-primary text-xs font-medium hover:bg-primary hover:text-white transition-all flex-shrink-0"
+                      >
+                        <ExternalLink className="w-3 h-3" />
+                        Profile
+                      </Link>
                     </div>
                   </div>
                 </motion.div>
