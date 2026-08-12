@@ -28,7 +28,7 @@ export default function StudentsPage() {
   const [students, setStudents] = useState([]);
   const [pagination, setPagination] = useState(null);
   const [search, setSearch] = useState('');
-  const [activeFilter, setActiveFilter] = useState('all'); // 'all' | 'active' | 'inactive'
+  const [activeFilter, setActiveFilter] = useState('active'); // 'all' | 'active' | 'inactive'
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [showAdmission, setShowAdmission] = useState(false);
