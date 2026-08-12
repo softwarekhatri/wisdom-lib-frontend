@@ -99,15 +99,20 @@ function fmtShort(date) {
 
 // ── Seat cell ──────────────────────────────────────────────────────────────
 // seatMap[n] is now an array of occupants (one per batch)
+const BLOCKED_SEATS = new Set([48, 51]);
+
 function SeatCell({ seatNum, seatMap, selectedBatchCount, selected, onClick }) {
   const occupants = seatMap[seatNum] || [];
   const isBooked = occupants.length > 0;
+  const isBlocked = BLOCKED_SEATS.has(seatNum);
   // Partial = booked in some but not all selected batches
   const isPartial = isBooked && selectedBatchCount > 1 && occupants.length < selectedBatchCount;
   const isGirl = seatNum >= 1 && seatNum <= 20;
 
   let colorClass;
-  if (!isBooked) {
+  if (isBlocked) {
+    colorClass = 'bg-gray-100 border-gray-300 text-gray-400 cursor-not-allowed';
+  } else if (!isBooked) {
     colorClass = 'bg-white border-dashed border-gray-300 text-gray-300 hover:border-primary-200 hover:text-primary-200';
   } else if (isPartial) {
     colorClass = 'bg-gradient-to-br from-amber-400 to-orange-500 border-amber-500 text-white shadow-sm shadow-amber-200';
@@ -120,34 +125,51 @@ function SeatCell({ seatNum, seatMap, selectedBatchCount, selected, onClick }) {
   const due = isBooked ? earliestDue(occupants) : null;
   const dueShort = fmtShort(due);
 
-  const tooltipText = isBooked
+  const tooltipText = isBlocked
+    ? `Seat ${seatNum} — Not available`
+    : isBooked
     ? `Seat ${seatNum} — ${occupants.map(o => `${o.fullName} (${o.batch})`).join(', ')}${due ? ` · Due: ${dueShort}` : ''}`
     : `Seat ${seatNum} — Available`;
 
   return (
     <motion.button
-      whileHover={{ scale: 1.1, y: -1 }}
-      whileTap={{ scale: 0.95 }}
-      onClick={() => onClick(seatNum, occupants)}
+      whileHover={isBlocked ? {} : { scale: 1.1, y: -1 }}
+      whileTap={isBlocked ? {} : { scale: 0.95 }}
+      onClick={() => !isBlocked && onClick(seatNum, occupants)}
       title={tooltipText}
       className={[
-        'w-14 h-[72px] rounded-xl flex flex-col items-center justify-center py-1.5 transition-all border-2',
+        'w-14 h-[72px] rounded-xl flex flex-col items-center justify-center py-1.5 transition-all border-2 relative overflow-hidden',
         colorClass,
         selected ? 'ring-2 ring-amber-400 ring-offset-1 scale-105' : '',
       ].join(' ')}
     >
-      <span className={`text-sm font-black leading-none ${isBooked ? 'text-white/90' : ''}`}>{seatNum}</span>
-      {isBooked && (
-        <span className="text-[8px] text-white/90 leading-none mt-0.5 max-w-[48px] truncate px-0.5">
-          {occupants.length > 1 ? `${occupants.length} shifts` : occupants[0].fullName?.split(' ')[0]}
-        </span>
+      {isBlocked ? (
+        <>
+          {/* Diagonal cross lines */}
+          <span className="absolute inset-0 pointer-events-none">
+            <svg width="100%" height="100%" className="absolute inset-0">
+              <line x1="4" y1="4" x2="100%" y2="100%" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" />
+              <line x1="100%" y1="4" x2="4" y2="100%" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+          </span>
+          <span className="text-sm font-black leading-none text-gray-400 relative z-10">{seatNum}</span>
+        </>
+      ) : (
+        <>
+          <span className={`text-sm font-black leading-none ${isBooked ? 'text-white/90' : ''}`}>{seatNum}</span>
+          {isBooked && (
+            <span className="text-[8px] text-white/90 leading-none mt-0.5 max-w-[48px] truncate px-0.5">
+              {occupants.length > 1 ? `${occupants.length} shifts` : occupants[0].fullName?.split(' ')[0]}
+            </span>
+          )}
+          {isBooked && dueShort && (
+            <span className="text-[8px] font-bold text-yellow-200 leading-normal mt-1 max-w-[52px] truncate px-0.5">
+              {dueShort}
+            </span>
+          )}
+          {!isBooked && <Armchair className="w-3.5 h-3.5 mt-1 opacity-40" />}
+        </>
       )}
-      {isBooked && dueShort && (
-        <span className="text-[8px] font-bold text-yellow-200 leading-normal mt-1 max-w-[52px] truncate px-0.5">
-          {dueShort}
-        </span>
-      )}
-      {!isBooked && <Armchair className="w-3.5 h-3.5 mt-1 opacity-40" />}
     </motion.button>
   );
 }
