@@ -78,7 +78,7 @@ export default function AdmissionModal({ onClose, onSuccess }) {
   });
   const [seatAssignments, setSeatAssignments] = useState([]);
   const [feeTouched, setFeeTouched] = useState(false);
-  const [whatsappSameAsMobile, setWhatsappSameAsMobile] = useState(false);
+  const [whatsappSameAsMobile, setWhatsappSameAsMobile] = useState(true);
 
   // Auto-fill libraryFees from standard rate when batches change,
   // unless admin has manually overridden the fee field.
