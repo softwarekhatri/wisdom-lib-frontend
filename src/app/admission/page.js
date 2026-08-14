@@ -143,7 +143,12 @@ function CameraModal({ onCapture, onClose }) {
     const start = async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: "user" },
+          video: {
+            facingMode: "user",
+            width: { ideal: 720 },
+            height: { ideal: 1280 },
+            aspectRatio: { ideal: 0.75 },
+          },
           audio: false,
         });
         streamRef.current = stream;
@@ -198,7 +203,7 @@ function CameraModal({ onCapture, onClose }) {
             <X className="w-5 h-5" />
           </button>
         </div>
-        <div className="relative bg-black aspect-video flex items-center justify-center">
+        <div className="relative bg-black aspect-[3/4] flex items-center justify-center">
           {error ? (
             <p className="text-red-400 text-sm text-center px-4">{error}</p>
           ) : (
