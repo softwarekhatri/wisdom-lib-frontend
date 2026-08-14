@@ -22,8 +22,9 @@ const API_BASE =
   process.env.NEXT_PUBLIC_API_URL ||
   "https://wisdom-library-backend.vercel.app/api";
 const HIDDEN_BATCHES = new Set(["10 PM - 6 AM"]);
-const UPI_ID = "7209703947@paytm"; // Change to actual UPI ID
-const UPI_NAME = "Wisdom+Library";
+const UPI_ID = "6299803624@naviaxis";
+const UPI_NUMBER = "6299803624";
+const UPI_NAME = "ADITYA RAJ";
 const WA_NUMBER = "917209703947";
 const BLOCKED = new Set(["48", "51"]);
 const TOTAL_SEATS = Array.from({ length: 67 }, (_, i) => String(i + 1)).filter(
@@ -319,9 +320,41 @@ function PhotoPicker({ onChange }) {
   );
 }
 
+function UpiRow({ label, value }) {
+  const [copied, setCopied] = useState(false);
+  const copy = () => {
+    navigator.clipboard.writeText(value).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    });
+  };
+  return (
+    <div className="flex items-center justify-between bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5">
+      <span className="text-xs text-amber-600">{label}</span>
+      <div className="flex items-center gap-2">
+        <span className="text-sm font-bold text-amber-900 select-all">{value}</span>
+        <button
+          type="button"
+          onClick={copy}
+          title={`Copy ${label}`}
+          className="text-amber-500 hover:text-amber-800 transition-colors"
+        >
+          {copied ? (
+            <Check className="w-3.5 h-3.5 text-green-600" />
+          ) : (
+            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+            </svg>
+          )}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function SuccessScreen({ name, mobile, batches, seatNumbers, fee }) {
   const upiUrl = `upi://pay?pa=${UPI_ID}&pn=${UPI_NAME}&am=${fee}&cu=INR`;
-  const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(upiUrl)}`;
+  const qrSrc = `https://res.cloudinary.com/plpnaehl/image/upload/v1786730924/QR_nspiju.jpg`;
 
   const batchLines = (batches || [])
     .map((b) => {
@@ -331,7 +364,7 @@ function SuccessScreen({ name, mobile, batches, seatNumbers, fee }) {
     .join(", ");
 
   const waMessage = encodeURIComponent(
-    `Hi! I have made the payment for my library admission.\n\nName: ${name}\nMobile: ${mobile}\n${(batches || []).length > 1 ? 'Batches' : 'Batch'}: ${batchLines}\nAmount: ₹${fee}/month\n\nPlease find the payment screenshot attached.`,
+    `Hi! I have made the payment for my library admission.\n\nName: ${name}\nMobile: ${mobile}\n${(batches || []).length > 1 ? "Batches" : "Batch"}: ${batchLines}\nAmount: ₹${fee}/month\n\nPlease find the payment screenshot attached.`,
   );
   const waUrl = `https://wa.me/${WA_NUMBER}?text=${waMessage}`;
 
@@ -430,9 +463,14 @@ function SuccessScreen({ name, mobile, batches, seatNumbers, fee }) {
           height={180}
           className="mx-auto rounded-xl border border-amber-200 mb-3"
         />
-        <p className="text-xs text-amber-700 font-medium mb-4">
-          UPI ID: <span className="font-bold select-all">{UPI_ID}</span>
-        </p>
+        <div className="space-y-1.5 mb-4 text-left">
+          <UpiRow label="UPI Number" value={UPI_NUMBER} />
+          <UpiRow label="UPI ID" value={UPI_ID} />
+          <div className="flex items-center justify-between bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5">
+            <span className="text-xs text-amber-600">UPI Name</span>
+            <span className="text-sm font-black text-green-700 tracking-wide">{UPI_NAME}</span>
+          </div>
+        </div>
 
         {/* "Open Any UPI App" — highlight label, not a button */}
         <div className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-amber-100 border border-amber-300 mb-4">
@@ -539,7 +577,9 @@ export default function AdmissionPage() {
 
   const sf = (field) => (e) => {
     const isPhone = field === "mobile" || field === "whatsappNumber";
-    const val = isPhone ? e.target.value.replace(/\D/g, "").slice(0, 10) : e.target.value;
+    const val = isPhone
+      ? e.target.value.replace(/\D/g, "").slice(0, 10)
+      : e.target.value;
     setForm((f) => {
       const next = { ...f, [field]: val };
       if (field === "mobile" && wasSame) next.whatsappNumber = val;
