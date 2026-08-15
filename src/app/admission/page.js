@@ -65,11 +65,12 @@ function SeatGrid({ bookedSeats }) {
 function BatchAvailability({ batches, bookedSeats }) {
   const [open, setOpen] = useState(null);
 
+
   return (
     <div className="space-y-2">
       {batches.map((batch) => {
-        const booked = (bookedSeats[batch] || []).length;
-        const available = TOTAL_SEATS.length - booked;
+        const bookedSet = new Set(bookedSeats[batch] || []);
+        const available = TOTAL_SEATS.filter(n => !bookedSet.has(n)).length;
         const isOpen = open === batch;
         return (
           <div
@@ -91,7 +92,7 @@ function BatchAvailability({ batches, bookedSeats }) {
                   {available} available
                 </span>
                 <span className="text-xs text-primary-lighter">
-                  {booked} booked
+                  {TOTAL_SEATS.length - available} booked
                 </span>
                 {isOpen ? (
                   <ChevronUp className="w-4 h-4 text-primary-lighter" />
@@ -437,7 +438,7 @@ function SuccessScreen({ name, mobile, batches, seatNumbers, fee }) {
 
       {/* Amount to pay */}
       {fee > 0 && (
-        <div className="flex items-center justify-between bg-primary/5 border border-primary/20 rounded-xl px-4 py-3 mb-5">
+        <div className="flex items-center justify-between bg-primary/5 border border-primary/20 rounded-xl px-4 py-3 mb-4">
           <div className="text-left">
             <p className="text-sm font-semibold text-primary">Amount to Pay</p>
             <p className="text-xs text-primary-lighter">
@@ -449,6 +450,27 @@ function SuccessScreen({ name, mobile, batches, seatNumbers, fee }) {
           </div>
         </div>
       )}
+
+      {/* WhatsApp button — top */}
+      <a
+        href={waUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex flex-col items-center justify-center gap-1 w-full px-4 py-4 rounded-xl bg-green-500 hover:bg-green-600 text-white transition-colors shadow-sm shadow-green-200 mb-4"
+      >
+        <div className="flex items-center gap-2">
+          <WhatsAppIcon />
+          <p className="text-sm font-semibold">
+            I have made the payment, share screenshot
+          </p>
+        </div>
+        <p className="text-xl font-black tracking-wide text-white">
+          +91 {WA_NUMBER.replace("91", "")}
+        </p>
+      </a>
+      <p className="text-xs text-gray-400 mb-4">
+        Screenshot भेजने पर जल्दी verify होगा
+      </p>
 
       <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 mb-4">
         <p className="text-sm font-semibold text-amber-800 mb-1">
@@ -537,26 +559,6 @@ function SuccessScreen({ name, mobile, batches, seatNumbers, fee }) {
         </p>
       </div>
 
-      {/* WhatsApp button */}
-      <a
-        href={waUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="flex flex-col items-center justify-center gap-1 w-full px-4 py-4 rounded-xl bg-green-500 hover:bg-green-600 text-white transition-colors shadow-sm shadow-green-200"
-      >
-        <div className="flex items-center gap-2">
-          <WhatsAppIcon />
-          <p className="text-sm font-semibold">
-            I have made the payment, share screenshot
-          </p>
-        </div>
-        <p className="text-xl font-black tracking-wide text-white">
-          +91 {WA_NUMBER.replace("91", "")}
-        </p>
-      </a>
-      <p className="text-xs text-gray-400 mt-2">
-        Screenshot भेजने पर जल्दी verify होगा
-      </p>
     </motion.div>
   );
 }
