@@ -1,12 +1,11 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react"; // useRef kept for CameraModal
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 import {
   ChevronDown,
   ChevronUp,
   Camera,
-  Upload,
   Check,
   X,
   User,
@@ -246,21 +245,16 @@ function CameraModal({ onCapture, onClose }) {
 }
 
 function PhotoPicker({ onChange }) {
-  const fileRef = useRef(null);
   const [preview, setPreview] = useState(null);
   const [showCamera, setShowCamera] = useState(false);
 
-  const handleFile = (file) => {
+  const handleCapture = (file) => {
+    setShowCamera(false);
     if (!file) return;
     onChange(file);
     const reader = new FileReader();
     reader.onload = (e) => setPreview(e.target.result);
     reader.readAsDataURL(file);
-  };
-
-  const handleCapture = (file) => {
-    setShowCamera(false);
-    handleFile(file);
   };
 
   const clear = () => {
@@ -275,11 +269,7 @@ function PhotoPicker({ onChange }) {
       </label>
       {preview ? (
         <div className="relative w-24 h-24 rounded-xl overflow-hidden border-2 border-primary">
-          <img
-            src={preview}
-            alt="preview"
-            className="w-full h-full object-cover"
-          />
+          <img src={preview} alt="preview" className="w-full h-full object-cover" />
           <button
             type="button"
             onClick={clear}
@@ -289,30 +279,14 @@ function PhotoPicker({ onChange }) {
           </button>
         </div>
       ) : (
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => fileRef.current?.click()}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 border-dashed border-gray-300 text-gray-500 text-sm hover:border-primary hover:text-primary transition-colors"
-          >
-            <Upload className="w-4 h-4" /> Upload
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowCamera(true)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 border-dashed border-gray-300 text-gray-500 text-sm hover:border-primary hover:text-primary transition-colors"
-          >
-            <Camera className="w-4 h-4" /> Camera
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={() => setShowCamera(true)}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 border-dashed border-gray-300 text-gray-500 text-sm hover:border-primary hover:text-primary transition-colors"
+        >
+          <Camera className="w-4 h-4" /> Take Photo
+        </button>
       )}
-      <input
-        ref={fileRef}
-        type="file"
-        accept="image/*"
-        className="sr-only"
-        onChange={(e) => handleFile(e.target.files[0])}
-      />
       {showCamera && (
         <CameraModal
           onCapture={handleCapture}
