@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '@/lib/api';
-import { formatDate, formatCurrency, getPaymentStatus, MONTH_NAMES, photoUrl, getWhatsAppUrl, getAdmissionWhatsAppUrl, getPaymentRecordedWhatsAppUrl, BATCHES, SHIFT_FEES, NIGHT_SHIFT, NIGHT_SHIFT_FEE, computeStandardFee, blockNumberSpin } from '@/lib/utils';
+import { formatDate, formatCurrency, getPaymentStatus, MONTH_NAMES, photoUrl, getWhatsAppUrl, getAdmissionWhatsAppUrl, getPaymentRecordedWhatsAppUrl, BATCHES, SHIFT_FEES, NIGHT_SHIFT, NIGHT_SHIFT_FEE, computeStandardFee, computeFlexiFee, blockNumberSpin } from '@/lib/utils';
 import StudentAvatar from '@/components/StudentAvatar';
 
 const WhatsAppIcon = ({ size = 16 }) => (
@@ -72,15 +72,19 @@ export default function StudentDetailPage() {
     setLoading(false);
   };
 
-  // Auto-suggest libraryFees based on selected batches when editing, unless admin changed it manually.
+  // Auto-suggest libraryFees based on batches + flexi/seated status.
   useEffect(() => {
     if (!editing || feeTouched) return;
-    const selectedBatches = seatAssignments.filter((r) => r.batch).map((r) => r.batch);
-    const standard = computeStandardFee(selectedBatches);
-    if (standard) setForm((f) => ({ ...f, libraryFees: standard }));
+    const validRows = seatAssignments.filter((r) => r.batch);
+    if (!validRows.length) return;
+    const allFlexi = validRows.every((r) => !r.seatNumber);
+    const fee = allFlexi
+      ? computeFlexiFee(validRows.length)
+      : computeStandardFee(validRows.map((r) => r.batch));
+    if (fee) setForm((f) => ({ ...f, libraryFees: fee }));
   }, [seatAssignments, editing, feeTouched]);
 
-  const addSeatRow = () => setSeatAssignments(rows => [...rows, { batch: '', seatNumber: '' }]);
+  const addSeatRow = () => setSeatAssignments(rows => [...rows, { batch: '', seatNumber: '', remarks: '' }]);
   const removeSeatRow = (index) => setSeatAssignments(rows => rows.filter((_, i) => i !== index));
   const updateSeatRow = (index, field, value) =>
     setSeatAssignments(rows => rows.map((row, i) => (i === index ? { ...row, [field]: value } : row)));
@@ -300,11 +304,22 @@ export default function StudentDetailPage() {
                   <span className="text-primary-lighter flex-shrink-0">Batches:</span>
                   {student.seatAssignments?.length ? (
                     <div className="flex flex-col gap-1">
-                      {student.seatAssignments.map(a => (
-                        <span key={a.batch} className="text-primary font-medium">
-                          {a.batch}{a.seatNumber ? ` (${a.seatNumber})` : ''}
-                        </span>
-                      ))}
+                      {student.seatAssignments.map(a => {
+                        const isFlexi = !a.seatNumber;
+                        return (
+                          <div key={a.batch} className="flex flex-col gap-0.5">
+                            <span className={`inline-flex items-center gap-1.5 text-sm font-medium px-2 py-0.5 rounded-lg w-fit ${isFlexi ? 'bg-orange-100 text-orange-700 ring-1 ring-orange-300' : 'text-primary'}`}>
+                              {a.batch}
+                              {isFlexi
+                                ? <span className="text-xs font-bold">· Flexi Batch</span>
+                                : <span className="text-primary-lighter font-normal">· Seat {a.seatNumber}</span>}
+                            </span>
+                            {a.remarks && (
+                              <span className="text-xs text-primary-lighter pl-2 italic">"{a.remarks}"</span>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   ) : (
                     <span className="text-primary font-medium">Not decided</span>
@@ -428,29 +443,41 @@ export default function StudentDetailPage() {
                   {seatAssignments.length === 0 ? (
                     <p className="text-xs text-red-500">At least one batch is required — click &ldquo;Add Batch&rdquo; to assign one.</p>
                   ) : (
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       {seatAssignments.map((row, i) => {
                         const otherBatches = seatAssignments.filter((_, idx) => idx !== i).map(r => r.batch);
                         const availableBatches = BATCHES.filter(b => b === row.batch || !otherBatches.includes(b));
+                        const isFlexi = row.batch && !row.seatNumber;
                         return (
-                        <div key={i} className="flex gap-2 items-center">
-                          <select
-                            value={row.batch}
-                            onChange={e => updateSeatRow(i, 'batch', e.target.value)}
-                            className="input-field flex-1 min-w-[160px] truncate"
-                          >
-                            <option value="">Select batch *</option>
-                            {availableBatches.map(b => <option key={b} value={b}>{b}</option>)}
-                          </select>
+                        <div key={i} className={`rounded-xl border p-3 space-y-2 ${isFlexi ? 'border-orange-200 bg-orange-50/50' : 'border-primary-100 bg-primary-50/30'}`}>
+                          <div className="flex gap-2 items-center flex-wrap">
+                            <select
+                              value={row.batch}
+                              onChange={e => updateSeatRow(i, 'batch', e.target.value)}
+                              className="input-field flex-1 min-w-[140px] text-sm"
+                            >
+                              <option value="">Select batch *</option>
+                              {availableBatches.map(b => <option key={b} value={b}>{b}</option>)}
+                            </select>
+                            <input
+                              value={row.seatNumber}
+                              onChange={e => updateSeatRow(i, 'seatNumber', e.target.value)}
+                              placeholder="Seat (optional)"
+                              className="input-field w-28 flex-shrink-0 text-sm"
+                            />
+                            <button type="button" onClick={() => removeSeatRow(i)} className="p-2 rounded-xl text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors flex-shrink-0">
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                          {isFlexi && (
+                            <p className="text-xs text-orange-600 font-medium px-1">⚡ Flexi Batch — no fixed seat · Fee: ₹{computeFlexiFee(seatAssignments.filter(r => r.batch && !r.seatNumber).length)}/mo</p>
+                          )}
                           <input
-                            value={row.seatNumber}
-                            onChange={e => updateSeatRow(i, 'seatNumber', e.target.value)}
-                            placeholder="Seat no. (optional)"
-                            className="input-field w-32 flex-shrink-0"
+                            value={row.remarks || ''}
+                            onChange={e => updateSeatRow(i, 'remarks', e.target.value)}
+                            placeholder="Remarks (e.g. will come from 8AM, window seat preference…)"
+                            className="input-field w-full text-sm"
                           />
-                          <button type="button" onClick={() => removeSeatRow(i)} className="p-2.5 rounded-xl text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors flex-shrink-0">
-                            <Trash2 className="w-4 h-4" />
-                          </button>
                         </div>
                         );
                       })}

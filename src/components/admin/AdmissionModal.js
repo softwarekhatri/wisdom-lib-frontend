@@ -32,9 +32,11 @@ import {
   formatCurrency,
   BATCHES,
   SHIFT_FEES,
+  FLEXI_FEES,
   NIGHT_SHIFT,
   NIGHT_SHIFT_FEE,
   computeStandardFee,
+  computeFlexiFee,
   blockNumberSpin,
 } from "@/lib/utils";
 import { addMonths, addDays, format } from "date-fns";
@@ -80,17 +82,24 @@ export default function AdmissionModal({ onClose, onSuccess }) {
   const [feeTouched, setFeeTouched] = useState(false);
   const [whatsappSameAsMobile, setWhatsappSameAsMobile] = useState(true);
 
-  // Auto-fill libraryFees from standard rate when batches change,
-  // unless admin has manually overridden the fee field.
+  // Auto-fill libraryFees based on batches and whether seats are assigned.
+  // If ALL batches are flexi (no seat), use FLEXI_FEES; otherwise standard fee.
   useEffect(() => {
     if (feeTouched) return;
-    const selectedBatches = seatAssignments.filter((r) => r.batch).map((r) => r.batch);
-    const standard = computeStandardFee(selectedBatches);
-    if (standard) setStudentForm((f) => ({ ...f, libraryFees: String(standard) }));
+    const validRows = seatAssignments.filter((r) => r.batch);
+    if (!validRows.length) return;
+    const allFlexi = validRows.every((r) => !r.seatNumber);
+    let fee;
+    if (allFlexi) {
+      fee = computeFlexiFee(validRows.length);
+    } else {
+      fee = computeStandardFee(validRows.map((r) => r.batch));
+    }
+    if (fee) setStudentForm((f) => ({ ...f, libraryFees: String(fee) }));
   }, [seatAssignments, feeTouched]);
 
   const addSeatRow = () =>
-    setSeatAssignments((rows) => [...rows, { batch: "", seatNumber: "" }]);
+    setSeatAssignments((rows) => [...rows, { batch: "", seatNumber: "", remarks: "" }]);
   const removeSeatRow = (index) =>
     setSeatAssignments((rows) => rows.filter((_, i) => i !== index));
   const updateSeatRow = (index, field, value) =>
@@ -507,7 +516,7 @@ export default function AdmissionModal({ onClose, onSuccess }) {
                     Batch&rdquo; to assign one.
                   </p>
                 ) : (
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     {seatAssignments.map((row, i) => {
                       const otherBatches = seatAssignments
                         .filter((_, idx) => idx !== i)
@@ -515,37 +524,43 @@ export default function AdmissionModal({ onClose, onSuccess }) {
                       const availableBatches = BATCHES.filter(
                         (b) => b === row.batch || !otherBatches.includes(b),
                       );
+                      const isFlexi = row.batch && !row.seatNumber;
                       return (
-                      <div key={i} className="flex gap-2 items-center">
-                        <select
-                          value={row.batch}
-                          onChange={(e) =>
-                            updateSeatRow(i, "batch", e.target.value)
-                          }
-                          className="input-field flex-1 min-w-[160px] truncate"
-                        >
-                          <option value="">Select batch *</option>
-                          {availableBatches.map((b) => (
-                            <option key={b} value={b}>
-                              {b}
-                            </option>
-                          ))}
-                        </select>
+                      <div key={i} className={`rounded-xl border p-3 space-y-2 ${isFlexi ? 'border-orange-200 bg-orange-50/50' : 'border-primary-100 bg-primary-50/30'}`}>
+                        <div className="flex gap-2 items-center">
+                          <select
+                            value={row.batch}
+                            onChange={(e) => updateSeatRow(i, "batch", e.target.value)}
+                            className="input-field flex-1 text-sm"
+                          >
+                            <option value="">Select batch *</option>
+                            {availableBatches.map((b) => (
+                              <option key={b} value={b}>{b}</option>
+                            ))}
+                          </select>
+                          <input
+                            value={row.seatNumber}
+                            onChange={(e) => updateSeatRow(i, "seatNumber", e.target.value)}
+                            placeholder="Seat (optional)"
+                            className="input-field w-28 flex-shrink-0 text-sm"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeSeatRow(i)}
+                            className="p-2 rounded-xl text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors flex-shrink-0"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                        {isFlexi && (
+                          <p className="text-xs text-orange-600 font-medium px-1">⚡ Flexi Batch — no fixed seat · Fee: ₹{computeFlexiFee(seatAssignments.filter(r => r.batch && !r.seatNumber).length)}/mo</p>
+                        )}
                         <input
-                          value={row.seatNumber}
-                          onChange={(e) =>
-                            updateSeatRow(i, "seatNumber", e.target.value)
-                          }
-                          placeholder="Seat no. (optional)"
-                          className="input-field w-32 flex-shrink-0"
+                          value={row.remarks}
+                          onChange={(e) => updateSeatRow(i, "remarks", e.target.value)}
+                          placeholder="Remarks (e.g. will come from 8AM, window seat preference…)"
+                          className="input-field w-full text-sm"
                         />
-                        <button
-                          type="button"
-                          onClick={() => removeSeatRow(i)}
-                          className="p-2.5 rounded-xl text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors flex-shrink-0"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
                       </div>
                       );
                     })}

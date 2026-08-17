@@ -216,9 +216,14 @@ export const photoUrl = (photo) => {
   return /^https?:\/\//i.test(photo) ? photo : `${apiBase}${photo}`;
 };
 
-// Standard monthly fees by number of day-shifts. Index = day-shift count.
-// Used across admission, edit, and payment forms to auto-suggest fees.
+// Standard monthly fees by number of day-shifts (fixed seat).
 export const SHIFT_FEES = { 1: 300, 2: 500, 3: 750, 4: 1000 };
+
+// Flexi batch fees (no fixed seat) — 1 shift ₹200, 2 shifts ₹400, 3+ shifts ₹600.
+export const FLEXI_FEES = { 1: 200, 2: 400, 3: 600 };
+
+// Returns the flexi fee for a given number of shifts (capped at 3).
+export const computeFlexiFee = (count) => FLEXI_FEES[Math.min(count, 3)] || 0;
 
 // Night shift is a special batch priced independently at a flat rate.
 export const NIGHT_SHIFT = "10 PM - 6 AM";

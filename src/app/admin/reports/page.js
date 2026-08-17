@@ -571,7 +571,7 @@ export default function ReportsPage() {
       {activeTab === "dues" && (
         <div className="space-y-5">
           <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-sm text-amber-800">
-            Students shown here have payments overdue or due within 7 days.
+            Students shown here have payments overdue or due within 5 days.
           </div>
 
           {loading ? (
