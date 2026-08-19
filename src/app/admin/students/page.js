@@ -208,7 +208,7 @@ export default function StudentsPage() {
             className="input-field pl-12"
           />
         </div>
-        <div className="flex items-center gap-1 p-1 bg-primary-50 rounded-xl border border-primary-100">
+        <div className="flex items-center gap-1 p-1 bg-primary-50 rounded-xl border border-primary-100 max-w-full overflow-x-auto">
           {[
             { value: 'all', label: 'All' },
             { value: 'active', label: 'Active' },
@@ -219,7 +219,7 @@ export default function StudentsPage() {
             <button
               key={f.value}
               onClick={() => setActiveFilter(f.value)}
-              className={`relative px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+              className={`relative shrink-0 whitespace-nowrap px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 activeFilter === f.value
                   ? 'bg-white text-primary shadow-sm border border-primary-100'
                   : 'text-primary-lighter hover:text-primary'
