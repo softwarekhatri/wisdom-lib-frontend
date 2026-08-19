@@ -234,15 +234,21 @@ function MembershipCard({ student, membershipDuration }) {
             </div>
             <div className="flex items-center gap-2 mt-2 flex-wrap">
               {student?.seatAssignments?.length > 0 ? (
-                student.seatAssignments.map((a) => (
-                  <span
-                    key={a.batch}
-                    className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/10 text-white/70 text-xs"
-                  >
-                    <Armchair className="w-3 h-3" />
-                    {a.batch}{a.seatNumber ? ` (${a.seatNumber})` : ''}
-                  </span>
-                ))
+                student.seatAssignments.map((a) => {
+                  const isFlexi = !a.seatNumber;
+                  return (
+                    <span
+                      key={a.batch}
+                      className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs ${
+                        isFlexi ? 'bg-orange-500/30 text-orange-200 ring-1 ring-orange-400/40' : 'bg-white/10 text-white/70'
+                      }`}
+                    >
+                      <Armchair className="w-3 h-3" />
+                      {a.batch}
+                      {isFlexi ? <span className="font-bold">· Flexi</span> : ` (${a.seatNumber})`}
+                    </span>
+                  );
+                })
               ) : (
                 <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/10 text-white/70 text-xs">
                   <Clock className="w-3 h-3" />
