@@ -28,7 +28,6 @@ const WhatsAppIcon = ({ size = 16 }) => (
 import toast from "react-hot-toast";
 import api from "@/lib/api";
 import {
-  MONTH_NAMES,
   formatCurrency,
   BATCHES,
   SHIFT_FEES,
@@ -38,24 +37,11 @@ import {
   computeStandardFee,
   computeFlexiFee,
   blockNumberSpin,
+  generateMonthOptions,
+  toLocalDateStr,
 } from "@/lib/utils";
-import { addMonths, addDays, format } from "date-fns";
+import { addMonths, addDays, format, differenceInCalendarDays } from "date-fns";
 import CameraCapture from "./CameraCapture";
-
-function buildCoveredMonths(startYear, startMonth, count) {
-  const months = [];
-  let y = startYear,
-    m = startMonth;
-  for (let i = 0; i < count; i++) {
-    months.push({ year: y, month: m, label: `${MONTH_NAMES[m - 1]} ${y}` });
-    m++;
-    if (m > 12) {
-      m = 1;
-      y++;
-    }
-  }
-  return months;
-}
 
 const CURRENT = new Date();
 
@@ -116,6 +102,28 @@ export default function AdmissionModal({ onClose, onSuccess }) {
   });
   const [numMonths, setNumMonths] = useState(1);
   const [monthsTouched, setMonthsTouched] = useState(false);
+  const [coversUntil, setCoversUntil] = useState("");
+  const [isCustomDate, setIsCustomDate] = useState(false);
+
+  // Base of the coverage period for the very first payment is the admission
+  // date itself (0 months paid yet) — same convention as the backend's
+  // computePaidThroughDate for a student with no payment history.
+  const admissionBase = studentForm.admissionDate
+    ? new Date(studentForm.admissionDate)
+    : CURRENT;
+
+  // Default "Covers Until" resets whenever numMonths (or admission date)
+  // changes, discarding any manual override — mirrors PaymentModal.
+  useEffect(() => {
+    setCoversUntil(toLocalDateStr(addMonths(admissionBase, numMonths)));
+    setIsCustomDate(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [numMonths, studentForm.admissionDate]);
+
+  const handleCoversUntilChange = (e) => {
+    setCoversUntil(e.target.value);
+    setIsCustomDate(true);
+  };
 
   const handlePhotoChange = (e) => {
     const file = e.target.files[0];
@@ -207,11 +215,8 @@ export default function AdmissionModal({ onClose, onSuccess }) {
     if (!createdStudent) return;
     const parsedAmt = parseFloat(paymentForm.amount) || 0;
     if (parsedAmt <= 0) return toast.error("Enter a valid amount");
-    const admDate = studentForm.admissionDate
-      ? new Date(studentForm.admissionDate)
-      : CURRENT;
-    const startYear = admDate.getFullYear();
-    const startMonth = admDate.getMonth() + 1;
+    const startYear = admissionBase.getFullYear();
+    const startMonth = admissionBase.getMonth() + 1;
     setLoading(true);
     try {
       await api.post("/payments", {
@@ -220,9 +225,9 @@ export default function AdmissionModal({ onClose, onSuccess }) {
         mode: paymentForm.mode,
         referenceNo: paymentForm.referenceNo.trim() || undefined,
         receivedDate: paymentForm.receivedDate,
-        startYear,
-        startMonth,
-        numMonths,
+        ...(isCustomDate
+          ? { isCustomDate: true, coversUntil }
+          : { startYear, startMonth, numMonths }),
       });
       toast.success("Payment recorded!");
       onSuccess();
@@ -615,27 +620,25 @@ export default function AdmissionModal({ onClose, onSuccess }) {
             (() => {
               const fee = paymentFee;
               const parsedAmt = paymentParsedAmt;
-              const admDate = studentForm.admissionDate
-                ? new Date(studentForm.admissionDate)
-                : CURRENT;
-              const startYear = admDate.getFullYear();
-              const startMonth = admDate.getMonth() + 1;
               const covered =
-                parsedAmt > 0
-                  ? buildCoveredMonths(startYear, startMonth, numMonths)
+                parsedAmt > 0 && !isCustomDate
+                  ? generateMonthOptions(admissionBase.getFullYear(), admissionBase.getMonth() + 1, numMonths)
                   : [];
               const remainder = fee > 0 ? parsedAmt - fee * numMonths : 0;
-              const newPaidThrough =
-                parsedAmt > 0 ? addMonths(admDate, numMonths) : null;
-              const newNextDue = newPaidThrough
-                ? addDays(newPaidThrough, 1)
+              const parsedCoversUntil =
+                parsedAmt > 0 && coversUntil ? new Date(coversUntil) : null;
+              const newNextDue = parsedCoversUntil
+                ? addDays(parsedCoversUntil, 1)
                 : null;
-              const paidThroughStr = newPaidThrough
-                ? format(newPaidThrough, "MMM d, yyyy")
+              const paidThroughStr = parsedCoversUntil
+                ? format(parsedCoversUntil, "MMM d, yyyy")
                 : null;
               const dueDateStr = newNextDue
                 ? format(newNextDue, "MMMM d, yyyy")
                 : null;
+              const coverageDays = parsedCoversUntil
+                ? differenceInCalendarDays(parsedCoversUntil, admissionBase)
+                : 0;
 
               return (
                 <form onSubmit={handlePaymentSubmit} className="space-y-4">
@@ -777,6 +780,39 @@ export default function AdmissionModal({ onClose, onSuccess }) {
                     </p>
                   </div>
 
+                  {/* Covers Until — auto-set from months above, editable for partial periods */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-xs font-bold text-primary uppercase tracking-wide">
+                        Covers Until
+                      </label>
+                      {isCustomDate && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCoversUntil(toLocalDateStr(addMonths(admissionBase, numMonths)));
+                            setIsCustomDate(false);
+                          }}
+                          className="text-xs text-primary-lighter hover:text-primary underline underline-offset-2"
+                        >
+                          Reset to {numMonths} month{numMonths !== 1 ? "s" : ""}
+                        </button>
+                      )}
+                    </div>
+                    <input
+                      type="date"
+                      value={coversUntil}
+                      min={toLocalDateStr(addDays(admissionBase, 1))}
+                      onChange={handleCoversUntilChange}
+                      className="input-field text-sm"
+                    />
+                    {isCustomDate && (
+                      <p className="text-xs text-orange-500 mt-1.5">
+                        Custom period — {coverageDays} day{coverageDays !== 1 ? "s" : ""} (not a full month)
+                      </p>
+                    )}
+                  </div>
+
                   {/* Live preview */}
                   <AnimatePresence>
                     {parsedAmt > 0 && (
@@ -793,16 +829,22 @@ export default function AdmissionModal({ onClose, onSuccess }) {
                               <p className="text-xs font-bold text-primary-lighter uppercase tracking-wide mb-1.5">
                                 Covers
                               </p>
-                              <div className="flex flex-wrap gap-1.5">
-                                {covered.map((mc) => (
-                                  <span
-                                    key={`${mc.year}-${mc.month}`}
-                                    className="px-2.5 py-1 bg-primary text-white text-xs font-semibold rounded-lg"
-                                  >
-                                    {mc.label}
-                                  </span>
-                                ))}
-                              </div>
+                              {isCustomDate ? (
+                                <span className="px-2.5 py-1 bg-orange-500 text-white text-xs font-semibold rounded-lg">
+                                  {coverageDays} day{coverageDays !== 1 ? "s" : ""}
+                                </span>
+                              ) : (
+                                <div className="flex flex-wrap gap-1.5">
+                                  {covered.map((mc) => (
+                                    <span
+                                      key={`${mc.year}-${mc.month}`}
+                                      className="px-2.5 py-1 bg-primary text-white text-xs font-semibold rounded-lg"
+                                    >
+                                      {mc.label}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
                             </div>
                           </div>
                           <div className="px-4 py-3 flex items-center gap-2 text-sm flex-wrap">

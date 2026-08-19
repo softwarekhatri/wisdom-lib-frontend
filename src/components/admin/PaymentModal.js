@@ -4,67 +4,27 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, IndianRupee, Banknote, CreditCard, CheckCircle, Loader2, CalendarCheck, ArrowRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '@/lib/api';
-import { MONTH_NAMES, formatCurrency, SHIFT_FEES, photoUrl, blockNumberSpin } from '@/lib/utils';
+import { formatCurrency, SHIFT_FEES, photoUrl, blockNumberSpin, computeStudentPaidThrough, generateMonthOptions, toLocalDateStr } from '@/lib/utils';
 import StudentAvatar from '@/components/StudentAvatar';
-import { addMonths, addDays, format, differenceInDays } from 'date-fns';
+import { addMonths, addDays, format, differenceInDays, differenceInCalendarDays } from 'date-fns';
 
 const TODAY = new Date().toISOString().split('T')[0];
-
-/* Given all payments + admission date → return { startYear, startMonth, paidUpToLabel, totalMonthsPaid } */
-function resolvePaymentState(allPayments, admissionDate) {
-  const base = admissionDate ? new Date(admissionDate) : new Date();
-  let maxYear = base.getFullYear();
-  let maxMonth = base.getMonth() + 1;
-  let totalMonthsPaid = 0;
-
-  for (const p of allPayments) {
-    for (const mc of p.monthsCovered || []) {
-      totalMonthsPaid++;
-      if (mc.year > maxYear || (mc.year === maxYear && mc.month > maxMonth)) {
-        maxYear = mc.year;
-        maxMonth = mc.month;
-      }
-    }
-  }
-
-  const paidUpToLabel = totalMonthsPaid === 0
-    ? 'No payments recorded yet'
-    : format(addMonths(base, totalMonthsPaid), 'MMM d, yyyy');
-
-  // next calendar month after last paid (for building covered[] chips)
-  const nextMonth = maxMonth === 12 ? 1 : maxMonth + 1;
-  const nextYear  = maxMonth === 12 ? maxYear + 1 : maxYear;
-
-  return { startMonth: nextMonth, startYear: nextYear, paidUpToLabel, totalMonthsPaid };
-}
-
-/* Build array of month labels covered by [startMonth/startYear] for n months */
-function buildCoveredMonths(startYear, startMonth, count) {
-  const months = [];
-  let y = startYear, m = startMonth;
-  for (let i = 0; i < count; i++) {
-    months.push({ year: y, month: m, label: `${MONTH_NAMES[m - 1]} ${y}` });
-    m++; if (m > 12) { m = 1; y++; }
-  }
-  return months;
-}
-
 
 export default function PaymentModal({ student, onClose, onSuccess }) {
   const [fetchingHistory, setFetchingHistory] = useState(true);
   const [submitting, setSubmitting]           = useState(false);
 
   // state resolved from payment history
-  const [startYear, setStartYear]             = useState(new Date().getFullYear());
-  const [startMonth, setStartMonth]           = useState(new Date().getMonth() + 1);
+  const [currentPaidThrough, setCurrentPaidThrough] = useState(new Date());
   const [paidUpToLabel, setPaidUpToLabel]     = useState('');
-  const [totalMonthsPaid, setTotalMonthsPaid] = useState(0);
 
   // form fields
   const [amount, setAmount]         = useState('');
   const [numMonths, setNumMonths]   = useState(1);
   const [monthsTouched, setMonthsTouched] = useState(false);
   const [noMonthCoverage, setNoMonthCoverage] = useState(false);
+  const [coversUntil, setCoversUntil] = useState('');
+  const [isCustomDate, setIsCustomDate] = useState(false);
   const [mode, setMode]             = useState('cash');
   const [referenceNo, setRefNo]     = useState('');
   const [receivedDate, setDate]     = useState(TODAY);
@@ -72,19 +32,17 @@ export default function PaymentModal({ student, onClose, onSuccess }) {
 
   const amountRef = useRef(null);
 
-  // ── Auto-detect next unpaid month ─────────────────────────────
+  // ── Auto-detect current paid-through date from history ─────────
   useEffect(() => {
     if (!student?._id) return;
     setFetchingHistory(true);
     setMonthsTouched(false);
     api.get(`/payments/student/${student._id}`, { params: { page: 1 } })
       .then(({ data }) => {
-        const { startYear: sy, startMonth: sm, paidUpToLabel: lbl, totalMonthsPaid: tmp } =
-          resolvePaymentState(data.payments || [], student.admissionDate);
-        setStartYear(sy);
-        setStartMonth(sm);
-        setPaidUpToLabel(lbl);
-        setTotalMonthsPaid(tmp);
+        const payments = data.payments || [];
+        const paidThrough = computeStudentPaidThrough(student.admissionDate, payments);
+        setCurrentPaidThrough(paidThrough);
+        setPaidUpToLabel(payments.length === 0 ? 'No payments recorded yet' : format(paidThrough, 'MMM d, yyyy'));
       })
       .catch(() => {})
       .finally(() => {
@@ -92,6 +50,21 @@ export default function PaymentModal({ student, onClose, onSuccess }) {
         setTimeout(() => amountRef.current?.focus(), 100);
       });
   }, [student]);
+
+  // ── Default "Covers Until" — resets to admin's chosen months whenever
+  // numMonths (or the base paid-through date) changes, discarding any
+  // manual override. The admin can then edit the date field for a custom
+  // partial period (e.g. 15 days); editing months again resets it back.
+  useEffect(() => {
+    if (fetchingHistory) return;
+    setCoversUntil(toLocalDateStr(addMonths(currentPaidThrough, numMonths)));
+    setIsCustomDate(false);
+  }, [numMonths, currentPaidThrough, fetchingHistory]);
+
+  const handleCoversUntilChange = (e) => {
+    setCoversUntil(e.target.value);
+    setIsCustomDate(true);
+  };
 
   // ── Derived calculations ──────────────────────────────────────
   const shiftCount      = student?.seatAssignments?.length || 1;
@@ -122,12 +95,15 @@ export default function PaymentModal({ student, onClose, onSuccess }) {
     setMonthsTouched(false);
   };
 
-  const covered = parsedAmt > 0 && !noMonthCoverage ? buildCoveredMonths(startYear, startMonth, numMonths) : [];
-  const admBase         = student?.admissionDate ? new Date(student.admissionDate) : new Date();
-  const newPaidThrough  = parsedAmt > 0 && !noMonthCoverage ? addMonths(admBase, totalMonthsPaid + numMonths) : null;
-  const newNextDue      = newPaidThrough ? addDays(newPaidThrough, 1) : null;
-  const paidThroughStr  = newPaidThrough ? format(newPaidThrough, 'MMM d, yyyy') : null;
-  const dueDateStr      = newNextDue ? format(newNextDue, 'MMMM d, yyyy') : null;
+  const periodStart      = addDays(currentPaidThrough, 1);
+  const covered          = parsedAmt > 0 && !noMonthCoverage && !isCustomDate
+    ? generateMonthOptions(periodStart.getFullYear(), periodStart.getMonth() + 1, numMonths)
+    : [];
+  const parsedCoversUntil = parsedAmt > 0 && !noMonthCoverage && coversUntil ? new Date(coversUntil) : null;
+  const newNextDue        = parsedCoversUntil ? addDays(parsedCoversUntil, 1) : null;
+  const paidThroughStr    = parsedCoversUntil ? format(parsedCoversUntil, 'MMM d, yyyy') : null;
+  const dueDateStr        = newNextDue ? format(newNextDue, 'MMMM d, yyyy') : null;
+  const coverageDays      = parsedCoversUntil ? differenceInCalendarDays(parsedCoversUntil, currentPaidThrough) : 0;
 
   const adjustMonths = (delta) => {
     setMonthsTouched(true);
@@ -150,7 +126,9 @@ export default function PaymentModal({ student, onClose, onSuccess }) {
         mode,
         referenceNo: referenceNo.trim() || undefined,
         receivedDate,
-        ...(!noMonthCoverage && { startYear, startMonth, numMonths }),
+        ...(!noMonthCoverage && (isCustomDate
+          ? { isCustomDate: true, coversUntil }
+          : { startYear: periodStart.getFullYear(), startMonth: periodStart.getMonth() + 1, numMonths })),
       });
       if (updateFee && standardFee > 0) {
         await api.put(`/students/${student._id}`, { libraryFees: standardFee });
@@ -188,10 +166,8 @@ export default function PaymentModal({ student, onClose, onSuccess }) {
               {fetchingHistory ? (
                 <p className="text-white/55 text-xs">Loading history…</p>
               ) : (() => {
-                const admBase2 = student?.admissionDate ? new Date(student.admissionDate) : new Date();
-                const nextDue2 = addDays(addMonths(admBase2, totalMonthsPaid), 1);
-                const days2    = differenceInDays(nextDue2, new Date());
-                const col      = days2 < 0 ? 'text-red-300' : days2 <= 7 ? 'text-orange-300' : 'text-green-300';
+                const days2 = differenceInDays(addDays(currentPaidThrough, 1), new Date());
+                const col   = days2 < 0 ? 'text-red-300' : days2 <= 7 ? 'text-orange-300' : 'text-green-300';
                 return (
                   <p className={`text-xs font-medium ${col}`}>
                     Paid upto: {paidUpToLabel}
@@ -328,6 +304,39 @@ export default function PaymentModal({ student, onClose, onSuccess }) {
                   <p className="text-xs text-primary-lighter mt-1.5">
                     Adjust manually for bundle/discounted pricing (e.g. ₹500 for 2 months).
                   </p>
+
+                  {/* ── Covers Until — auto-set from months above, editable for partial periods ── */}
+                  <div className="mt-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-xs font-bold text-primary uppercase tracking-wide">
+                        Covers Until
+                      </label>
+                      {isCustomDate && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCoversUntil(toLocalDateStr(addMonths(currentPaidThrough, numMonths)));
+                            setIsCustomDate(false);
+                          }}
+                          className="text-xs text-primary-lighter hover:text-primary underline underline-offset-2"
+                        >
+                          Reset to {numMonths} month{numMonths !== 1 ? 's' : ''}
+                        </button>
+                      )}
+                    </div>
+                    <input
+                      type="date"
+                      value={coversUntil}
+                      min={toLocalDateStr(periodStart)}
+                      onChange={handleCoversUntilChange}
+                      className="input-field text-sm"
+                    />
+                    {isCustomDate && (
+                      <p className="text-xs text-orange-500 mt-1.5">
+                        Custom period — {coverageDays} day{coverageDays !== 1 ? 's' : ''} (not a full month)
+                      </p>
+                    )}
+                  </div>
                 </>
               )}
             </div>
@@ -342,19 +351,25 @@ export default function PaymentModal({ student, onClose, onSuccess }) {
                   className="overflow-hidden"
                 >
                   <div className="rounded-2xl border-2 border-primary/20 bg-primary-50 divide-y divide-primary-100 overflow-hidden">
-                    {/* Months covered */}
+                    {/* Coverage */}
                     <div className="px-4 py-3 flex items-start gap-3">
                       <CalendarCheck className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
                       <div>
                         <p className="text-xs font-bold text-primary-lighter uppercase tracking-wide mb-1.5">Covers</p>
-                        <div className="flex flex-wrap gap-1.5">
-                          {covered.map(mc => (
-                            <span key={`${mc.year}-${mc.month}`}
-                              className="px-2.5 py-1 bg-primary text-white text-xs font-semibold rounded-lg">
-                              {mc.label}
-                            </span>
-                          ))}
-                        </div>
+                        {isCustomDate ? (
+                          <span className="px-2.5 py-1 bg-orange-500 text-white text-xs font-semibold rounded-lg">
+                            {coverageDays} day{coverageDays !== 1 ? 's' : ''}
+                          </span>
+                        ) : (
+                          <div className="flex flex-wrap gap-1.5">
+                            {covered.map(mc => (
+                              <span key={`${mc.year}-${mc.month}`}
+                                className="px-2.5 py-1 bg-primary text-white text-xs font-semibold rounded-lg">
+                                {mc.label}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
 

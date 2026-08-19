@@ -9,7 +9,7 @@ import {
   getPaymentStatus,
   getMembershipDuration,
   isAnniversaryWindow,
-  MONTH_NAMES,
+  formatCoverageLabel,
   photoUrl,
 } from "@/lib/utils";
 import StudentAvatar from "@/components/StudentAvatar";
@@ -709,8 +709,8 @@ function PaymentHistory({ payments, page, setPage, pagination }) {
                       {formatDate(p.receivedDate)}
                     </p>
                     <p className="text-xs text-primary-lighter mt-0.5">
-                      {p.monthsCovered?.length > 0
-                        ? `Covers: ${p.monthsCovered.map((mc) => `${MONTH_NAMES[mc.month - 1].slice(0, 3)} ${mc.year}`).join(", ")}`
+                      {formatCoverageLabel(p)
+                        ? `Covers: ${formatCoverageLabel(p)}`
                         : "Month not specified"}
                     </p>
                   </div>
@@ -811,11 +811,7 @@ export default function StudentDashboard() {
     student?.admissionDate,
   );
 
-  const totalMonthsPaid = allPayments.reduce(
-    (sum, p) => sum + (p.monthsCovered?.length || 0),
-    0,
-  );
-  const payStatus = getPaymentStatus(student?.admissionDate, totalMonthsPaid);
+  const payStatus = getPaymentStatus(student?.admissionDate, allPayments);
   const totalPaid = allPayments.reduce((sum, p) => sum + p.amount, 0);
 
   return (

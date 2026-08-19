@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '@/lib/api';
-import { formatDate, formatCurrency, getPaymentStatus, MONTH_NAMES, photoUrl, getWhatsAppUrl, getAdmissionWhatsAppUrl, getPaymentRecordedWhatsAppUrl, BATCHES, SHIFT_FEES, NIGHT_SHIFT, NIGHT_SHIFT_FEE, computeStandardFee, computeFlexiFee, blockNumberSpin } from '@/lib/utils';
+import { formatDate, formatCurrency, getPaymentStatus, formatCoverageLabel, MONTH_NAMES, photoUrl, getWhatsAppUrl, getAdmissionWhatsAppUrl, getPaymentRecordedWhatsAppUrl, BATCHES, SHIFT_FEES, NIGHT_SHIFT, NIGHT_SHIFT_FEE, computeStandardFee, computeFlexiFee, blockNumberSpin } from '@/lib/utils';
 import StudentAvatar from '@/components/StudentAvatar';
 
 const WhatsAppIcon = ({ size = 16 }) => (
@@ -175,8 +175,7 @@ export default function StudentDetailPage() {
 
   if (!student) return <div className="text-center py-16 text-primary-lighter">Student not found</div>;
 
-  const totalMonthsPaid = payments.reduce((sum, p) => sum + (p.monthsCovered?.length || 0), 0);
-  const payStatus = getPaymentStatus(student.admissionDate, totalMonthsPaid);
+  const payStatus = getPaymentStatus(student.admissionDate, payments);
 
   return (
     <div className="max-w-5xl mx-auto">
@@ -549,7 +548,7 @@ export default function StudentDetailPage() {
                             </span>
                           </td>
                           <td className="px-5 py-3.5 text-xs text-primary-lighter">
-                            {p.monthsCovered?.map(mc => `${MONTH_NAMES[mc.month - 1].slice(0, 3)} ${mc.year}`).join(', ') || '—'}
+                            {formatCoverageLabel(p) || '—'}
                           </td>
                           <td className="px-5 py-3.5">
                             <div className="flex items-center justify-end gap-1.5">

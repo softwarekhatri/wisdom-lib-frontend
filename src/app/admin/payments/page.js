@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { Search, Calendar, IndianRupee, Download, ChevronLeft, ChevronRight, Filter } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '@/lib/api';
-import { formatDate, formatCurrency, MONTH_NAMES, photoUrl, toLocalDateStr } from '@/lib/utils';
+import { formatDate, formatCurrency, formatCoverageLabel, photoUrl, toLocalDateStr } from '@/lib/utils';
 import StudentAvatar from '@/components/StudentAvatar';
 
 const PRESETS = [
@@ -184,7 +184,7 @@ export default function PaymentsPage() {
                     </td>
                     <td className="px-5 py-3.5 text-sm text-primary">{formatDate(p.receivedDate)}</td>
                     <td className="px-5 py-3.5 text-xs text-primary-lighter max-w-[160px]">
-                      {p.monthsCovered?.map(mc => `${MONTH_NAMES[mc.month - 1].slice(0, 3)} ${mc.year}`).join(', ') || '—'}
+                      {formatCoverageLabel(p) || '—'}
                     </td>
                     <td className="px-5 py-3.5 text-xs text-primary-lighter">{p.createdBy?.fullName || '—'}</td>
                   </motion.tr>

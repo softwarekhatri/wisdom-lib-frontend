@@ -2,6 +2,7 @@ import {
   format,
   formatDistance,
   differenceInDays,
+  differenceInCalendarDays,
   addMonths,
   addDays,
 } from "date-fns";
@@ -37,13 +38,32 @@ export const formatCurrency = (amount) =>
     maximumFractionDigits: 0,
   }).format(amount || 0);
 
-// admissionDate: ISO string or Date. totalMonthsPaid: count of all monthsCovered entries.
-// Due date = admissionDate + totalMonthsPaid months + 1 day
+// Mirrors backend/src/utils/paymentDates.js computePaidThroughDate — single
+// source of truth for "how far is this student paid up to" on the client.
+// New-style payments (isCustomDate or whole-month, recorded after the
+// covers-until feature shipped) store an explicit coversUntil date that
+// already bakes in every prior month/override, so the latest one wins.
+// Students with only legacy (monthsCovered-only) payments fall back to the
+// old whole-months-from-admission-date formula.
+export const computeStudentPaidThrough = (admissionDate, payments) => {
+  const base = admissionDate ? new Date(admissionDate) : new Date();
+  const withCoversUntil = (payments || []).filter((p) => p.coversUntil);
+  if (withCoversUntil.length) {
+    return withCoversUntil.reduce(
+      (latest, p) => (new Date(p.coversUntil) > latest ? new Date(p.coversUntil) : latest),
+      new Date(withCoversUntil[0].coversUntil),
+    );
+  }
+  const totalMonths = (payments || []).reduce((sum, p) => sum + (p.monthsCovered?.length || 0), 0);
+  return addMonths(base, totalMonths);
+};
+
+// admissionDate: ISO string or Date. payments: the student's Payment docs.
+// Due date = paid-through date + 1 day
 // e.g. admitted May 12, paid 1 month → paid through Jun 12 → due Jun 13
-export const getPaymentStatus = (admissionDate, totalMonthsPaid) => {
+export const getPaymentStatus = (admissionDate, payments) => {
   const now = new Date();
-  const base = admissionDate ? new Date(admissionDate) : now;
-  const paidThroughDate = addMonths(base, totalMonthsPaid);
+  const paidThroughDate = computeStudentPaidThrough(admissionDate, payments);
   const dueDate = addDays(paidThroughDate, 1);
   const daysUntilDue = differenceInDays(dueDate, now);
   const dueDateLabel = format(dueDate, "MMMM d, yyyy");
@@ -106,6 +126,23 @@ export const isAnniversaryWindow = (admissionDate) => {
 
   const isAnniversary = now >= anniversaryDate && now <= windowEnd;
   return { isAnniversary, yearsCompleted };
+};
+
+// Renders a payment's coverage for history displays: whole-month payments
+// show month chips' text ("Aug 2026, Sep 2026"); custom/overridden partial
+// periods (no monthsCovered, but a coversUntil/periodStart pair) show a day
+// count ("15 days") instead. Returns null if the payment covers no period.
+export const formatCoverageLabel = (payment) => {
+  if (payment?.monthsCovered?.length > 0) {
+    return payment.monthsCovered
+      .map((mc) => `${MONTH_NAMES[mc.month - 1].slice(0, 3)} ${mc.year}`)
+      .join(", ");
+  }
+  if (payment?.coversUntil && payment?.periodStart) {
+    const days = differenceInCalendarDays(new Date(payment.coversUntil), new Date(payment.periodStart)) + 1;
+    return `${days} day${days !== 1 ? "s" : ""}`;
+  }
+  return null;
 };
 
 export const generateMonthOptions = (startYear, startMonth, count = 12) => {
