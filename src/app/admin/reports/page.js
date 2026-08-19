@@ -34,6 +34,7 @@ import {
   Banknote,
   CreditCard,
   ExternalLink,
+  Armchair,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "@/lib/api";
@@ -60,6 +61,7 @@ const TABS = [
   { id: "dues", label: "⚠️ Dues Report" },
   { id: "comparison", label: "📊 Comparison" },
   { id: "financials", label: "💹 Financials" },
+  { id: "shifts", label: "🪑 Shift Distribution" },
 ];
 
 const FIN_PRESETS = [
@@ -202,6 +204,12 @@ export default function ReportsPage() {
   const [expSubmitting, setExpSubmitting] = useState(false);
   const [deletingExpId, setDeletingExpId] = useState(null);
 
+  // Shift distribution state
+  const [shiftData, setShiftData] = useState(null);
+  const [shiftActiveOnly, setShiftActiveOnly] = useState(true);
+  const [shiftLoading, setShiftLoading] = useState(false);
+  const [shiftDrilldown, setShiftDrilldown] = useState(null); // { shiftCount, batch, label } | null
+
   const fetchPaymentReport = async () => {
     setLoading(true);
     try {
@@ -303,6 +311,20 @@ export default function ReportsPage() {
     setExpSubmitting(false);
   };
 
+  const fetchShiftDistribution = async () => {
+    setShiftLoading(true);
+    try {
+      const { data } = await api.get("/reports/shifts", {
+        params: { active: shiftActiveOnly },
+      });
+      setShiftData(data);
+      setShiftDrilldown(null);
+    } catch {
+      toast.error("Failed to load shift distribution");
+    }
+    setShiftLoading(false);
+  };
+
   const handleDeleteExpense = async (id) => {
     setDeletingExpId(id);
     try {
@@ -320,7 +342,12 @@ export default function ReportsPage() {
     else if (activeTab === "dues") fetchDues();
     else if (activeTab === "comparison") fetchComparison();
     else if (activeTab === "financials") fetchFinancials();
+    else if (activeTab === "shifts") fetchShiftDistribution();
   }, [activeTab, preset, customStart, customEnd, duesPage]);
+
+  useEffect(() => {
+    if (activeTab === "shifts") fetchShiftDistribution();
+  }, [shiftActiveOnly]);
 
   useEffect(() => {
     if (activeTab === "comparison") fetchComparison();
@@ -438,6 +465,19 @@ export default function ReportsPage() {
       </ResponsiveContainer>
     );
   };
+
+  const shiftCounts = shiftData
+    ? Object.keys(shiftData.shiftCountTotals).map(Number).sort((a, b) => a - b)
+    : [];
+
+  const drilldownStudents =
+    shiftDrilldown && shiftData
+      ? shiftData.students.filter(
+          (s) =>
+            (shiftDrilldown.shiftCount == null || s.shiftCount === shiftDrilldown.shiftCount) &&
+            (shiftDrilldown.batch == null || s.batches.includes(shiftDrilldown.batch)),
+        )
+      : [];
 
   return (
     <div className="max-w-6xl mx-auto">
@@ -1304,6 +1344,322 @@ export default function ReportsPage() {
           )}
         </div>
       )}
+
+      {/* Shift Distribution */}
+      {activeTab === "shifts" && (
+        <div className="space-y-6">
+          {/* Filter bar */}
+          <div className="bg-white rounded-2xl border border-primary-100 p-4 flex flex-wrap gap-3 items-center justify-between">
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShiftActiveOnly(true)}
+                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${shiftActiveOnly ? "bg-primary text-white" : "bg-primary-50 text-primary hover:bg-primary-100"}`}
+              >
+                Active Students
+              </button>
+              <button
+                onClick={() => setShiftActiveOnly(false)}
+                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${!shiftActiveOnly ? "bg-primary text-white" : "bg-primary-50 text-primary hover:bg-primary-100"}`}
+              >
+                All Students
+              </button>
+            </div>
+            {shiftData && (
+              <span className="text-xs text-primary-lighter">
+                {shiftData.studentsWithBatch} with a batch assigned
+                {shiftData.studentsWithoutBatch > 0 &&
+                  ` · ${shiftData.studentsWithoutBatch} not decided yet`}
+              </span>
+            )}
+          </div>
+
+          {shiftLoading || !shiftData ? (
+            <div className="h-72 bg-primary-50 rounded-xl animate-pulse" />
+          ) : (
+            <>
+              {/* Stat cards — students by shift count */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                {shiftCounts.map((count) => (
+                  <button
+                    key={count}
+                    type="button"
+                    onClick={() =>
+                      setShiftDrilldown({
+                        shiftCount: count,
+                        batch: null,
+                        label: `${count} Shift${count !== 1 ? "s" : ""}`,
+                      })
+                    }
+                    className="text-left bg-white rounded-2xl border border-primary-100 p-4 hover:border-primary/40 hover:shadow-sm transition-all"
+                  >
+                    <div className="text-xs text-primary-lighter mb-1">
+                      {count} Shift{count !== 1 ? "s" : ""}
+                    </div>
+                    <div className="text-xl font-display font-bold text-primary">
+                      {shiftData.shiftCountTotals[count]}
+                    </div>
+                  </button>
+                ))}
+              </div>
+
+              {/* Chart */}
+              <div className="bg-white rounded-2xl border border-primary-100 p-5">
+                <h2 className="font-semibold text-primary mb-5">
+                  Students by Shift Count
+                </h2>
+                <ResponsiveContainer width="100%" height={280}>
+                  <BarChart
+                    data={shiftCounts.map((count) => ({
+                      name: `${count} Shift${count !== 1 ? "s" : ""}`,
+                      total: shiftData.shiftCountTotals[count],
+                    }))}
+                    margin={{ top: 10, right: 20, left: 10, bottom: 5 }}
+                  >
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      vertical={false}
+                      stroke="#f5e8e0"
+                    />
+                    <XAxis
+                      dataKey="name"
+                      tick={{ fontSize: 12, fill: CHART_COLORS.light }}
+                      axisLine={false}
+                      tickLine={false}
+                    />
+                    <YAxis
+                      allowDecimals={false}
+                      tick={{ fontSize: 11, fill: CHART_COLORS.light }}
+                      axisLine={false}
+                      tickLine={false}
+                    />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Bar
+                      dataKey="total"
+                      name="Students"
+                      radius={[8, 8, 0, 0]}
+                      fill={CHART_COLORS.primary}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Cross-tab: batch x shift-count */}
+              <div className="bg-white rounded-2xl border border-primary-100 overflow-hidden">
+                <div className="p-5 border-b border-primary-50">
+                  <h2 className="font-semibold text-primary">
+                    Batch Breakdown
+                  </h2>
+                  <p className="text-xs text-primary-lighter mt-0.5">
+                    Each cell is students with exactly that many shifts who
+                    include that batch. &ldquo;Total&rdquo; is students in
+                    that batch regardless of shift count.
+                  </p>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-primary-50">
+                        <th className="px-5 py-3 text-left text-xs font-medium text-primary-lighter uppercase tracking-wide">
+                          Batch
+                        </th>
+                        {shiftCounts.map((count) => (
+                          <th
+                            key={count}
+                            className="px-5 py-3 text-center text-xs font-medium text-primary-lighter uppercase tracking-wide whitespace-nowrap"
+                          >
+                            {count} Shift{count !== 1 ? "s" : ""}
+                          </th>
+                        ))}
+                        <th className="px-5 py-3 text-right text-xs font-medium text-primary-lighter uppercase tracking-wide">
+                          Total
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-primary-50">
+                      {shiftData.batches.map((batch) => (
+                        <tr
+                          key={batch}
+                          className="hover:bg-primary-50/40 transition-colors"
+                        >
+                          <td className="px-5 py-3.5 text-primary font-medium whitespace-nowrap">
+                            {batch}
+                          </td>
+                          {shiftCounts.map((count) => {
+                            const value = shiftData.matrix[count]?.[batch] || 0;
+                            return (
+                              <td
+                                key={count}
+                                onClick={() =>
+                                  value > 0 &&
+                                  setShiftDrilldown({
+                                    shiftCount: count,
+                                    batch,
+                                    label: `${batch} · ${count} Shift${count !== 1 ? "s" : ""}`,
+                                  })
+                                }
+                                className={`px-5 py-3.5 text-center text-primary-lighter ${
+                                  value > 0 ? "cursor-pointer hover:bg-primary-100/60 hover:text-primary font-medium" : ""
+                                }`}
+                              >
+                                {value}
+                              </td>
+                            );
+                          })}
+                          <td
+                            onClick={() =>
+                              (shiftData.batchTotals[batch] || 0) > 0 &&
+                              setShiftDrilldown({ shiftCount: null, batch, label: batch })
+                            }
+                            className={`px-5 py-3.5 text-right font-bold text-primary ${
+                              (shiftData.batchTotals[batch] || 0) > 0 ? "cursor-pointer hover:bg-primary-100/60" : ""
+                            }`}
+                          >
+                            {shiftData.batchTotals[batch] || 0}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot>
+                      <tr className="border-t-2 border-primary-100 bg-primary-50/40">
+                        <td className="px-5 py-3.5 font-bold text-primary">
+                          Total Students
+                        </td>
+                        {shiftCounts.map((count) => (
+                          <td
+                            key={count}
+                            onClick={() =>
+                              setShiftDrilldown({
+                                shiftCount: count,
+                                batch: null,
+                                label: `${count} Shift${count !== 1 ? "s" : ""}`,
+                              })
+                            }
+                            className="px-5 py-3.5 text-center font-bold text-primary cursor-pointer hover:bg-primary-100/60"
+                          >
+                            {shiftData.shiftCountTotals[count]}
+                          </td>
+                        ))}
+                        <td
+                          onClick={() =>
+                            setShiftDrilldown({ shiftCount: null, batch: null, label: "All Students With a Batch" })
+                          }
+                          className="px-5 py-3.5 text-right font-bold text-primary cursor-pointer hover:bg-primary-100/60"
+                        >
+                          {shiftData.studentsWithBatch}
+                        </td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Shift drill-down modal */}
+      <AnimatePresence>
+        {shiftDrilldown && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+            onClick={() => setShiftDrilldown(null)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ type: "spring", damping: 22, stiffness: 300 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-3xl w-full max-w-lg max-h-[85vh] shadow-2xl overflow-hidden flex flex-col"
+            >
+              <div className="bg-gradient-to-r from-primary to-primary-light px-5 py-4 flex items-center justify-between flex-shrink-0">
+                <div>
+                  <h2 className="text-white font-display font-bold text-base">
+                    {shiftDrilldown.label}
+                  </h2>
+                  <p className="text-white/70 text-xs mt-0.5">
+                    {drilldownStudents.length} student
+                    {drilldownStudents.length !== 1 ? "s" : ""}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShiftDrilldown(null)}
+                  className="w-8 h-8 rounded-lg bg-white/15 hover:bg-white/25 flex items-center justify-center text-white transition-colors flex-shrink-0"
+                >
+                  <X size={15} />
+                </button>
+              </div>
+
+              <div className="overflow-y-auto divide-y divide-primary-50">
+                {drilldownStudents.length === 0 ? (
+                  <div className="py-12 text-center text-primary-lighter text-sm">
+                    No students match this filter
+                  </div>
+                ) : (
+                  drilldownStudents.map((s) => (
+                    <div
+                      key={s._id}
+                      className="p-4 flex items-center gap-3 hover:bg-primary-50/40 transition-colors"
+                    >
+                      <div className="w-10 h-10 rounded-xl bg-primary-100 flex items-center justify-center text-primary font-bold overflow-hidden flex-shrink-0">
+                        <StudentAvatar
+                          src={photoUrl(s.photo)}
+                          imgClassName="w-full h-full object-cover"
+                          fallback={<span>{s.fullName?.charAt(0)}</span>}
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="font-semibold text-primary text-sm truncate">
+                            {s.fullName}
+                          </p>
+                          {!s.isActive && (
+                            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-red-100 text-red-600 flex-shrink-0">
+                              Inactive
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-primary-lighter">
+                          {s.mobile || "—"}
+                        </p>
+                        <div className="flex flex-wrap gap-1 mt-1.5">
+                          {(s.seatAssignments || []).map((a) => {
+                            const isFlexi = !a.seatNumber;
+                            return (
+                              <span
+                                key={a.batch}
+                                className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-md font-medium ${
+                                  isFlexi
+                                    ? "bg-orange-100 text-orange-700 ring-1 ring-orange-300"
+                                    : "bg-primary-50 text-primary"
+                                }`}
+                              >
+                                <Armchair className="w-2.5 h-2.5" />
+                                {a.batch}
+                                {isFlexi ? " · Flexi" : ` (${a.seatNumber})`}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      </div>
+                      <Link
+                        href={`/admin/students/${s._id}`}
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary-50 text-primary text-xs font-medium hover:bg-primary hover:text-white transition-all flex-shrink-0"
+                      >
+                        <ExternalLink className="w-3 h-3" />
+                        Profile
+                      </Link>
+                    </div>
+                  ))
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
