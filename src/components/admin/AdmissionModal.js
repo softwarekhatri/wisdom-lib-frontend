@@ -271,12 +271,13 @@ export default function AdmissionModal({ onClose, onSuccess }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/50 backdrop-blur-sm p-4">
+      <div className="min-h-full flex items-center justify-center">
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="bg-white rounded-3xl w-full max-w-2xl shadow-2xl max-h-[90vh] overflow-y-auto"
+        className="bg-white rounded-3xl w-full max-w-2xl shadow-2xl my-8"
       >
         {/* Header */}
         <div className="bg-gradient-to-r from-primary to-primary-light p-6 rounded-t-3xl flex items-center justify-between">
@@ -959,6 +960,7 @@ export default function AdmissionModal({ onClose, onSuccess }) {
           )}
         </div>
       </motion.div>
+      </div>
 
       {showCamera && (
         <CameraCapture

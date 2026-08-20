@@ -143,13 +143,14 @@ export default function PaymentModal({ student, onClose, onSuccess }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm p-4">
+      <div className="min-h-full flex items-center justify-center">
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95 }}
         transition={{ type: 'spring', damping: 22, stiffness: 300 }}
-        className="bg-white rounded-3xl w-full max-w-sm shadow-2xl overflow-hidden"
+        className="bg-white rounded-3xl w-full max-w-sm shadow-2xl overflow-hidden my-8"
       >
         {/* ── Header ── */}
         <div className="bg-gradient-to-r from-primary to-primary-light px-5 py-4 flex items-center justify-between">
@@ -438,6 +439,7 @@ export default function PaymentModal({ student, onClose, onSuccess }) {
           </form>
         )}
       </motion.div>
+      </div>
     </div>
   );
 }
