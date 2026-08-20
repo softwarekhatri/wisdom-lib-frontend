@@ -31,6 +31,11 @@ export const formatDate = (date, fmt = "dd MMM yyyy") => {
   return format(new Date(date), fmt);
 };
 
+export const formatDateTime = (date, fmt = "dd MMM yyyy, hh:mm a") => {
+  if (!date) return "—";
+  return format(new Date(date), fmt);
+};
+
 export const formatCurrency = (amount) =>
   new Intl.NumberFormat("en-IN", {
     style: "currency",

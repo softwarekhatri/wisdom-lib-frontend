@@ -40,6 +40,7 @@ import toast from "react-hot-toast";
 import api from "@/lib/api";
 import {
   formatDate,
+  formatDateTime,
   formatCurrency,
   MONTH_NAMES,
   photoUrl,
@@ -237,6 +238,16 @@ export default function ReportsPage() {
       toast.error("Failed to load dues");
     }
     setLoading(false);
+  };
+
+  // Fires in the background when "Remind" is clicked — doesn't block or
+  // interfere with the WhatsApp link opening in its own tab.
+  const handleRemind = (studentId) => {
+    const now = new Date().toISOString();
+    setDuesData((prev) =>
+      prev?.map((s) => (s._id === studentId ? { ...s, lastReminderSentAt: now } : s)) ?? prev,
+    );
+    api.patch(`/students/${studentId}/remind`).catch(() => {});
   };
 
   const fetchComparison = async () => {
@@ -681,6 +692,14 @@ export default function ReportsPage() {
                             : "—"}
                         </span>
                       </div>
+                      {s.lastReminderSentAt && (
+                        <div>
+                          Last reminder sent:{" "}
+                          <span className="text-primary font-medium">
+                            {formatDateTime(s.lastReminderSentAt)}
+                          </span>
+                        </div>
+                      )}
                     </div>
                     <div className="mt-3 flex items-center gap-2">
                       <div
@@ -696,6 +715,7 @@ export default function ReportsPage() {
                           target="_blank"
                           rel="noopener noreferrer"
                           title="Send fee reminder on WhatsApp"
+                          onClick={() => handleRemind(s._id)}
                           className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-green-50 text-green-700 text-xs font-medium hover:bg-green-500 hover:text-white transition-all flex-shrink-0"
                         >
                           <WaIcon />
