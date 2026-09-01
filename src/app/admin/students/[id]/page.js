@@ -45,7 +45,6 @@ export default function StudentDetailPage() {
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
   const [showCamera, setShowCamera] = useState(false);
-  const [feeTouched, setFeeTouched] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deletingStudent, setDeletingStudent] = useState(false);
   const [pendingDeletePayment, setPendingDeletePayment] = useState(null);
@@ -71,18 +70,6 @@ export default function StudentDetailPage() {
     } catch { toast.error('Failed to load student'); }
     setLoading(false);
   };
-
-  // Auto-suggest libraryFees based on batches + flexi/seated status.
-  useEffect(() => {
-    if (!editing || feeTouched) return;
-    const validRows = seatAssignments.filter((r) => r.batch);
-    if (!validRows.length) return;
-    const allFlexi = validRows.every((r) => !r.seatNumber);
-    const fee = allFlexi
-      ? computeFlexiFee(validRows.length)
-      : computeStandardFee(validRows.map((r) => r.batch));
-    if (fee) setForm((f) => ({ ...f, libraryFees: fee }));
-  }, [seatAssignments, editing, feeTouched]);
 
   const addSeatRow = () => setSeatAssignments(rows => [...rows, { batch: '', seatNumber: '', remarks: '' }]);
   const removeSeatRow = (index) => setSeatAssignments(rows => rows.filter((_, i) => i !== index));
@@ -213,7 +200,7 @@ export default function StudentDetailPage() {
             </>
           ) : (
             <>
-              <button onClick={() => { setEditing(false); setFeeTouched(false); }} className="flex items-center gap-2 px-4 py-2 rounded-xl border border-primary-200 text-primary text-sm hover:bg-primary-50">
+              <button onClick={() => setEditing(false)} className="flex items-center gap-2 px-4 py-2 rounded-xl border border-primary-200 text-primary text-sm hover:bg-primary-50">
                 <X size={16} />
                 Cancel
               </button>
@@ -399,7 +386,7 @@ export default function StudentDetailPage() {
                 <div>
                   <label className="block text-xs font-semibold text-primary mb-1.5">Monthly Fees (₹)</label>
                   <input type="number" min="0" value={form.libraryFees || 0}
-                    onChange={e => { setForm(f => ({ ...f, libraryFees: e.target.value })); setFeeTouched(true); }}
+                    onChange={e => setForm(f => ({ ...f, libraryFees: e.target.value }))}
                     {...blockNumberSpin} className="input-field" />
                   {(() => {
                     const selectedBatches = seatAssignments.filter((r) => r.batch).map((r) => r.batch);
@@ -415,13 +402,13 @@ export default function StudentDetailPage() {
                     } else {
                       hint = `Standard for ${dayCount} shift${dayCount > 1 ? 's' : ''}: ${formatCurrency(standard)}`;
                     }
-                    const isCustom = feeTouched && parseFloat(form.libraryFees) !== standard;
+                    const isCustom = parseFloat(form.libraryFees) !== standard;
                     return (
                       <p className="text-xs text-primary-lighter mt-1">
                         {hint}
                         {isCustom && (
                           <button type="button"
-                            onClick={() => { setForm(f => ({ ...f, libraryFees: standard })); setFeeTouched(false); }}
+                            onClick={() => setForm(f => ({ ...f, libraryFees: standard }))}
                             className="ml-2 text-primary underline underline-offset-2">
                             Reset to standard
                           </button>

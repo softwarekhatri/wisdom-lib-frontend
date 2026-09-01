@@ -55,11 +55,15 @@ export const computeStudentPaidThrough = (admissionDate, payments) => {
   const withCoversUntil = (payments || []).filter((p) => p.coversUntil);
   if (withCoversUntil.length) {
     return withCoversUntil.reduce(
-      (latest, p) => (new Date(p.coversUntil) > latest ? new Date(p.coversUntil) : latest),
+      (latest, p) =>
+        new Date(p.coversUntil) > latest ? new Date(p.coversUntil) : latest,
       new Date(withCoversUntil[0].coversUntil),
     );
   }
-  const totalMonths = (payments || []).reduce((sum, p) => sum + (p.monthsCovered?.length || 0), 0);
+  const totalMonths = (payments || []).reduce(
+    (sum, p) => sum + (p.monthsCovered?.length || 0),
+    0,
+  );
   return addMonths(base, totalMonths);
 };
 
@@ -144,7 +148,11 @@ export const formatCoverageLabel = (payment) => {
       .join(", ");
   }
   if (payment?.coversUntil && payment?.periodStart) {
-    const days = differenceInCalendarDays(new Date(payment.coversUntil), new Date(payment.periodStart)) + 1;
+    const days =
+      differenceInCalendarDays(
+        new Date(payment.coversUntil),
+        new Date(payment.periodStart),
+      ) + 1;
     return `${days} day${days !== 1 ? "s" : ""}`;
   }
   return null;
@@ -261,8 +269,8 @@ export const photoUrl = (photo) => {
 // Standard monthly fees by number of day-shifts (fixed seat).
 export const SHIFT_FEES = { 1: 300, 2: 500, 3: 750, 4: 1000 };
 
-// Flexi batch fees (no fixed seat) — 1 shift ₹200, 2 shifts ₹400, 3+ shifts ₹600.
-export const FLEXI_FEES = { 1: 200, 2: 400, 3: 600 };
+// Flexi batch fees (no fixed seat) — 1 shift ₹300, 2 shifts ₹400, 3+ shifts ₹600.
+export const FLEXI_FEES = { 1: 300, 2: 400, 3: 600 };
 
 // Returns the flexi fee for a given number of shifts (capped at 3).
 export const computeFlexiFee = (count) => FLEXI_FEES[Math.min(count, 3)] || 0;
