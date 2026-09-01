@@ -277,7 +277,7 @@ export default function AdmissionModal({ onClose, onSuccess }) {
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="bg-white rounded-3xl w-full max-w-2xl shadow-2xl my-8"
+        className="bg-white rounded-3xl w-full max-w-2xl min-w-0 shadow-2xl my-8"
       >
         {/* Header */}
         <div className="bg-gradient-to-r from-primary to-primary-light p-6 rounded-t-3xl flex items-center justify-between">
@@ -434,7 +434,7 @@ export default function AdmissionModal({ onClose, onSuccess }) {
                     className="input-field resize-none"
                   />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <label className="block text-xs font-semibold text-primary mb-1.5">
                     Admission Date *
                   </label>

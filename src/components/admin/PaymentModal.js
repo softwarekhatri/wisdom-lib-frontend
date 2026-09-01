@@ -150,7 +150,7 @@ export default function PaymentModal({ student, onClose, onSuccess }) {
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95 }}
         transition={{ type: 'spring', damping: 22, stiffness: 300 }}
-        className="bg-white rounded-3xl w-full max-w-sm shadow-2xl overflow-hidden my-8"
+        className="bg-white rounded-3xl w-full max-w-sm min-w-0 shadow-2xl overflow-hidden my-8"
       >
         {/* ── Header ── */}
         <div className="bg-gradient-to-r from-primary to-primary-light px-5 py-4 flex items-center justify-between">

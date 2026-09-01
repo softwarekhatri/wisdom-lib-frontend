@@ -379,7 +379,7 @@ export default function StudentDetailPage() {
                   <label className="block text-xs font-semibold text-primary mb-1.5">Address</label>
                   <textarea rows={2} value={form.address || ''} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} className="input-field resize-none" />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <label className="block text-xs font-semibold text-primary mb-1.5">Admission Date</label>
                   <input type="date" value={form.admissionDate || ''} onChange={e => setForm(f => ({ ...f, admissionDate: e.target.value }))} className="input-field" />
                 </div>
