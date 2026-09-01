@@ -277,7 +277,7 @@ export default function AdmissionModal({ onClose, onSuccess }) {
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="bg-white rounded-3xl w-full max-w-2xl min-w-0 shadow-2xl my-8"
+        className="bg-white rounded-3xl w-full max-w-2xl min-w-0 shadow-2xl overflow-x-hidden my-8"
       >
         {/* Header */}
         <div className="bg-gradient-to-r from-primary to-primary-light p-6 rounded-t-3xl flex items-center justify-between">
@@ -738,12 +738,12 @@ export default function AdmissionModal({ onClose, onSuccess }) {
                     <label className="block text-xs font-bold text-primary mb-2 uppercase tracking-wide">
                       Months to Cover
                     </label>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 flex-wrap">
                       <button
                         type="button"
                         onClick={() => adjustMonths(-1)}
                         disabled={numMonths <= 1}
-                        className="w-10 h-10 rounded-xl border border-primary-200 text-primary font-bold text-lg hover:bg-primary-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                        className="w-10 h-10 rounded-xl border border-primary-200 text-primary font-bold text-lg hover:bg-primary-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex-shrink-0"
                       >
                         −
                       </button>
@@ -753,12 +753,12 @@ export default function AdmissionModal({ onClose, onSuccess }) {
                         value={numMonths}
                         onChange={handleMonthsInput}
                         {...blockNumberSpin}
-                        className="input-field w-16 text-center font-bold"
+                        className="input-field w-16 text-center font-bold flex-shrink-0"
                       />
                       <button
                         type="button"
                         onClick={() => adjustMonths(1)}
-                        className="w-10 h-10 rounded-xl border border-primary-200 text-primary font-bold text-lg hover:bg-primary-50 transition-colors"
+                        className="w-10 h-10 rounded-xl border border-primary-200 text-primary font-bold text-lg hover:bg-primary-50 transition-colors flex-shrink-0"
                       >
                         +
                       </button>

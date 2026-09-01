@@ -268,12 +268,12 @@ export default function PaymentModal({ student, onClose, onSuccess }) {
                 </p>
               ) : (
                 <>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 flex-wrap">
                     <button
                       type="button"
                       onClick={() => adjustMonths(-1)}
                       disabled={numMonths <= 1}
-                      className="w-10 h-10 rounded-xl border border-primary-200 text-primary font-bold text-lg hover:bg-primary-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                      className="w-10 h-10 rounded-xl border border-primary-200 text-primary font-bold text-lg hover:bg-primary-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex-shrink-0"
                     >
                       −
                     </button>
@@ -283,12 +283,12 @@ export default function PaymentModal({ student, onClose, onSuccess }) {
                       value={numMonths}
                       onChange={handleMonthsInput}
                       {...blockNumberSpin}
-                      className="input-field w-16 text-center font-bold"
+                      className="input-field w-16 text-center font-bold flex-shrink-0"
                     />
                     <button
                       type="button"
                       onClick={() => adjustMonths(1)}
-                      className="w-10 h-10 rounded-xl border border-primary-200 text-primary font-bold text-lg hover:bg-primary-50 transition-colors"
+                      className="w-10 h-10 rounded-xl border border-primary-200 text-primary font-bold text-lg hover:bg-primary-50 transition-colors flex-shrink-0"
                     >
                       +
                     </button>
