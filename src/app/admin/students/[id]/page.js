@@ -202,55 +202,59 @@ export default function StudentDetailPage() {
   return (
     <div className="max-w-5xl mx-auto">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
-        <Link href="/admin/students" className="p-2 rounded-xl hover:bg-primary-100 text-primary transition-colors">
+      <div className="flex items-center gap-2 sm:gap-3 mb-6">
+        <Link href="/admin/students" className="flex-shrink-0 p-2 rounded-xl hover:bg-primary-100 text-primary transition-colors">
           <ArrowLeft size={20} />
         </Link>
-        <div>
-          <h1 className="font-display text-xl sm:text-2xl font-bold text-primary">{student.fullName}</h1>
+        <div className="min-w-0 flex-1">
+          <h1 className="font-display text-xl sm:text-2xl font-bold text-primary break-words">{student.fullName}</h1>
           <p className="text-primary-lighter text-sm">Student Profile</p>
         </div>
-        <div className="ml-auto flex gap-2">
+        <div className="flex-shrink-0 flex gap-1.5 sm:gap-2">
           {!editing ? (
             <>
               {canModify && (
-                <button onClick={() => setShowDeleteConfirm(true)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl border border-red-200 text-red-600 text-sm hover:bg-red-50 transition-colors">
+                <button onClick={() => setShowDeleteConfirm(true)} title="Delete"
+                  className="flex items-center gap-1.5 px-2.5 sm:px-4 py-2 rounded-xl border border-red-200 text-red-600 text-sm hover:bg-red-50 transition-colors">
                   <Trash2 size={15} />
-                  Delete
+                  <span className="hidden sm:inline">Delete</span>
                 </button>
               )}
               {canModify && (
-                <button onClick={() => setEditing(true)} className="flex items-center gap-2 px-4 py-2 rounded-xl border border-primary-200 text-primary text-sm hover:bg-primary-50">
+                <button onClick={() => setEditing(true)} title="Edit"
+                  className="flex items-center gap-1.5 px-2.5 sm:px-4 py-2 rounded-xl border border-primary-200 text-primary text-sm hover:bg-primary-50">
                   <Edit size={16} />
-                  Edit
+                  <span className="hidden sm:inline">Edit</span>
                 </button>
               )}
               {canPay && (
-                <button onClick={() => setShowPaymentModal(true)} className="btn-primary flex items-center gap-2 text-sm px-4 py-2">
+                <button onClick={() => setShowPaymentModal(true)} title="Add Payment"
+                  className="btn-primary flex items-center gap-1.5 text-sm px-2.5 sm:px-4 py-2">
                   <Plus size={16} />
-                  Add Payment
+                  <span className="hidden sm:inline">Add Payment</span>
                 </button>
               )}
             </>
           ) : (
             <>
-              <button onClick={() => setEditing(false)} className="flex items-center gap-2 px-4 py-2 rounded-xl border border-primary-200 text-primary text-sm hover:bg-primary-50">
+              <button onClick={() => setEditing(false)} title="Cancel"
+                className="flex items-center gap-1.5 px-2.5 sm:px-4 py-2 rounded-xl border border-primary-200 text-primary text-sm hover:bg-primary-50">
                 <X size={16} />
-                Cancel
+                <span className="hidden sm:inline">Cancel</span>
               </button>
-              <button onClick={handleSave} disabled={saving} className="btn-primary flex items-center gap-2 text-sm px-4 py-2">
+              <button onClick={handleSave} disabled={saving} title="Save"
+                className="btn-primary flex items-center gap-1.5 text-sm px-2.5 sm:px-4 py-2">
                 <Save size={16} />
-                {saving ? 'Saving...' : 'Save'}
+                <span className="hidden sm:inline">{saving ? 'Saving...' : 'Save'}</span>
               </button>
             </>
           )}
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-6">
+      <div className="grid lg:grid-cols-3 gap-6 min-w-0">
         {/* Left: Profile card */}
-        <div className="lg:col-span-1 space-y-5">
+        <div className="lg:col-span-1 space-y-5 min-w-0">
           <div className="bg-white rounded-2xl border border-primary-100 overflow-hidden">
             {/* Photo */}
             <div className="bg-gradient-to-br from-primary to-primary-light h-40 flex items-center justify-center relative">
@@ -280,7 +284,7 @@ export default function StudentDetailPage() {
 
             <div className="p-5 space-y-3">
               <div className="flex items-center gap-2">
-                <span className={`flex-1 text-center py-2 px-3 rounded-xl text-sm font-medium ${
+                <span className={`flex-1 min-w-0 break-words text-center py-2 px-3 rounded-xl text-sm font-medium ${
                   student.isActive
                     ? 'bg-green-50 text-green-700 border border-green-200'
                     : 'bg-red-50 text-red-700 border border-red-200'
@@ -322,10 +326,10 @@ export default function StudentDetailPage() {
                   { icon: Mail, label: 'Email', value: student.email || '—' },
                   { icon: MapPin, label: 'Address', value: student.address || '—' },
                 ].map(({ icon: Icon, label, value, copyable }) => (
-                  <div key={label} className="flex items-center gap-2 text-primary-lighter">
-                    <Icon className="w-4 h-4 flex-shrink-0" />
-                    <span className="text-primary-lighter">{label}:</span>
-                    <span className="text-primary font-medium truncate">{value}</span>
+                  <div key={label} className="flex items-start gap-2 text-primary-lighter">
+                    <Icon className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                    <span className="text-primary-lighter flex-shrink-0">{label}:</span>
+                    <span className="text-primary font-medium min-w-0 break-words">{value}</span>
                     {copyable && student.username && (
                       <CopyButton value={student.username} className="text-primary-lighter hover:text-primary flex-shrink-0" />
                     )}
@@ -336,10 +340,10 @@ export default function StudentDetailPage() {
                   const days = student.nextDueDate ? Math.ceil((new Date(student.nextDueDate) - new Date()) / 86400000) : null;
                   const col = days === null ? 'text-primary' : days < 0 ? 'text-red-600' : days <= 7 ? 'text-orange-500' : 'text-green-600';
                   return (
-                    <div className="flex items-center gap-2 text-primary-lighter">
-                      <Clock className="w-4 h-4 flex-shrink-0" />
-                      <span className="text-primary-lighter">Next Due:</span>
-                      <span className={`font-semibold truncate ${col}`}>
+                    <div className="flex items-start gap-2 text-primary-lighter">
+                      <Clock className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                      <span className="text-primary-lighter flex-shrink-0">Next Due:</span>
+                      <span className={`font-semibold min-w-0 break-words ${col}`}>
                         {student.nextDueDate ? formatDate(student.nextDueDate, 'dd MMM yyyy') : payStatus.dueDateLabel}
                       </span>
                     </div>
@@ -349,7 +353,7 @@ export default function StudentDetailPage() {
                   <Armchair className="w-4 h-4 flex-shrink-0 mt-0.5" />
                   <span className="text-primary-lighter flex-shrink-0">Batches:</span>
                   {student.seatAssignments?.length ? (
-                    <div className="flex flex-col gap-1">
+                    <div className="flex flex-col gap-1 min-w-0">
                       {student.seatAssignments.map(a => {
                         const isFlexi = !a.seatNumber;
                         return (
@@ -361,7 +365,7 @@ export default function StudentDetailPage() {
                                 : <span className="text-primary-lighter font-normal">· Seat {a.seatNumber}</span>}
                             </span>
                             {a.remarks && (
-                              <span className="text-xs text-primary-lighter pl-2 italic">"{a.remarks}"</span>
+                              <span className="text-xs text-primary-lighter pl-2 italic break-words">"{a.remarks}"</span>
                             )}
                           </div>
                         );
@@ -412,7 +416,7 @@ export default function StudentDetailPage() {
         </div>
 
         {/* Right: Edit form / Payment history */}
-        <div className="lg:col-span-2 space-y-5">
+        <div className="lg:col-span-2 space-y-5 min-w-0">
           {editing ? (
             <div className="bg-white rounded-2xl border border-primary-100 p-6">
               <h2 className="font-semibold text-primary mb-5">Edit Student Details</h2>
@@ -537,6 +541,159 @@ export default function StudentDetailPage() {
             </div>
           ) : null}
 
+          {/* Payment History */}
+          <div className="bg-white rounded-2xl border border-primary-100 overflow-hidden">
+            <div className="p-5 border-b border-primary-50 flex items-center justify-between">
+              <h2 className="font-semibold text-primary">Payment History</h2>
+              <span className="text-xs text-primary-lighter">{payments.length} records</span>
+            </div>
+            {payments.length === 0 ? (
+              <div className="p-8 text-center text-primary-lighter text-sm">No payments recorded yet</div>
+            ) : (
+              <>
+                {/* Mobile: stacked cards — a 5-column table would force horizontal
+                    scrolling on narrow screens, so each payment wraps as its own block instead. */}
+                <div className="sm:hidden divide-y divide-primary-50">
+                  {payments.map((p) => (
+                    pendingDeletePayment === p._id ? (
+                      <div key={p._id} className="p-4 bg-red-50">
+                        <p className="text-sm text-red-700 font-medium mb-3 break-words">
+                          Delete {formatCurrency(p.amount)} payment on {formatDate(p.receivedDate)}?
+                        </p>
+                        <div className="flex gap-2">
+                          <button onClick={() => setPendingDeletePayment(null)}
+                            className="flex-1 px-3 py-1.5 rounded-lg border border-primary-200 text-primary text-xs hover:bg-white transition-colors">
+                            Cancel
+                          </button>
+                          <button
+                            onClick={() => handleDeletePayment(p._id)}
+                            disabled={deletingPaymentId === p._id}
+                            className="flex-1 px-3 py-1.5 rounded-lg bg-red-600 text-white text-xs font-semibold hover:bg-red-700 disabled:opacity-60 transition-colors flex items-center justify-center gap-1.5">
+                            {deletingPaymentId === p._id
+                              ? <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin inline-block" />
+                              : <Trash2 size={12} />}
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div key={p._id} className="p-4">
+                        <div className="flex items-start justify-between gap-2">
+                          <span className="text-sm font-semibold text-primary break-words min-w-0">{formatCurrency(p.amount)}</span>
+                          <span className="text-xs text-primary-lighter flex-shrink-0">{formatDate(p.receivedDate)}</span>
+                        </div>
+                        <div className="flex items-center justify-between gap-2 flex-wrap mt-2">
+                          <span className={`text-xs px-2 py-1 rounded-full break-words ${p.mode === 'cash' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
+                            {p.mode}{p.referenceNo ? ` · ${p.referenceNo}` : ''}
+                          </span>
+                          <span className="text-xs text-primary-lighter break-words min-w-0">
+                            {formatCoverageLabel(p) || '—'}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-end gap-1.5 mt-2">
+                          {canPay && (() => {
+                            const waUrl = getPaymentRecordedWhatsAppUrl({ ...p, student });
+                            return waUrl ? (
+                              <a href={waUrl} target="_blank" rel="noopener noreferrer"
+                                title="Send payment confirmation via WhatsApp"
+                                className="flex items-center justify-center w-7 h-7 rounded-lg bg-green-500 text-white hover:bg-green-600 active:scale-95 transition-all">
+                                <WhatsAppIcon size={13} />
+                              </a>
+                            ) : null;
+                          })()}
+                          {canModify && (
+                            <button onClick={() => setPendingDeletePayment(p._id)}
+                              className="p-1.5 rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 transition-all">
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  ))}
+                </div>
+
+                {/* Tablet & up: full table */}
+                <div className="hidden sm:block table-responsive">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-primary-50">
+                        <th className="text-left px-5 py-3 text-xs font-semibold text-primary-lighter uppercase tracking-wide">Date</th>
+                        <th className="text-left px-5 py-3 text-xs font-semibold text-primary-lighter uppercase tracking-wide">Amount</th>
+                        <th className="text-left px-5 py-3 text-xs font-semibold text-primary-lighter uppercase tracking-wide">Mode</th>
+                        <th className="text-left px-5 py-3 text-xs font-semibold text-primary-lighter uppercase tracking-wide">Covers</th>
+                        <th className="px-5 py-3" />
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-primary-50">
+                      {payments.map((p) => (
+                        pendingDeletePayment === p._id ? (
+                          <tr key={p._id} className="bg-red-50">
+                            <td colSpan={5} className="px-5 py-3.5">
+                              <div className="flex items-center justify-between gap-3">
+                                <span className="text-sm text-red-700 font-medium min-w-0 break-words">
+                                  Delete {formatCurrency(p.amount)} payment on {formatDate(p.receivedDate)}?
+                                </span>
+                                <div className="flex gap-2 flex-shrink-0">
+                                  <button onClick={() => setPendingDeletePayment(null)}
+                                    className="px-3 py-1.5 rounded-lg border border-primary-200 text-primary text-xs hover:bg-white transition-colors">
+                                    Cancel
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeletePayment(p._id)}
+                                    disabled={deletingPaymentId === p._id}
+                                    className="px-3 py-1.5 rounded-lg bg-red-600 text-white text-xs font-semibold hover:bg-red-700 disabled:opacity-60 transition-colors flex items-center gap-1.5">
+                                    {deletingPaymentId === p._id
+                                      ? <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin inline-block" />
+                                      : <Trash2 size={12} />}
+                                    Delete
+                                  </button>
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        ) : (
+                          <tr key={p._id} className="hover:bg-primary-50 transition-colors group">
+                            <td className="px-5 py-3.5 text-sm text-primary">{formatDate(p.receivedDate)}</td>
+                            <td className="px-5 py-3.5 text-sm font-semibold text-primary">{formatCurrency(p.amount)}</td>
+                            <td className="px-5 py-3.5">
+                              <span className={`text-xs px-2 py-1 rounded-full ${p.mode === 'cash' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
+                                {p.mode}{p.referenceNo ? ` · ${p.referenceNo}` : ''}
+                              </span>
+                            </td>
+                            <td className="px-5 py-3.5 text-xs text-primary-lighter">
+                              {formatCoverageLabel(p) || '—'}
+                            </td>
+                            <td className="px-5 py-3.5">
+                              <div className="flex items-center justify-end gap-1.5">
+                                {canPay && (() => {
+                                  const waUrl = getPaymentRecordedWhatsAppUrl({ ...p, student });
+                                  return waUrl ? (
+                                    <a href={waUrl} target="_blank" rel="noopener noreferrer"
+                                      title="Send payment confirmation via WhatsApp"
+                                      className="flex items-center justify-center w-7 h-7 rounded-lg bg-green-500 text-white hover:bg-green-600 active:scale-95 transition-all">
+                                      <WhatsAppIcon size={13} />
+                                    </a>
+                                  ) : null;
+                                })()}
+                                {canModify && (
+                                  <button onClick={() => setPendingDeletePayment(p._id)}
+                                    className="p-1.5 rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 transition-all">
+                                    <Trash2 size={14} />
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        )
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
+          </div>
+
           {/* Membership History — only shown once there's more than a single, ongoing stint */}
           {(student.admissionHistory?.length > 0 || !student.isActive) && (
             <div className="bg-white rounded-2xl border border-primary-100 overflow-hidden">
@@ -546,18 +703,18 @@ export default function StudentDetailPage() {
               </div>
               <div className="p-5 space-y-3">
                 {student.admissionHistory?.map((h, i) => (
-                  <div key={i} className="flex items-center gap-3 text-sm">
-                    <span className="w-2 h-2 rounded-full bg-primary-200 flex-shrink-0" />
-                    <span className="text-primary-lighter">
+                  <div key={i} className="flex items-start gap-3 text-sm">
+                    <span className="w-2 h-2 rounded-full bg-primary-200 flex-shrink-0 mt-1.5" />
+                    <span className="text-primary-lighter min-w-0 break-words">
                       Joined <span className="text-primary font-medium">{formatDate(h.admissionDate)}</span>
                       {' '}&rarr; Inactive from <span className="text-primary font-medium">{formatDateTime(h.inactiveDate)}</span>
                       {' '}<span className="text-xs text-primary-lighter">({formatDaysBetween(h.admissionDate, h.inactiveDate)})</span>
                     </span>
                   </div>
                 ))}
-                <div className="flex items-center gap-3 text-sm">
-                  <span className={`w-2 h-2 rounded-full flex-shrink-0 ${student.isActive ? 'bg-green-500' : 'bg-red-500'}`} />
-                  <span className="text-primary-lighter">
+                <div className="flex items-start gap-3 text-sm">
+                  <span className={`w-2 h-2 rounded-full flex-shrink-0 mt-1.5 ${student.isActive ? 'bg-green-500' : 'bg-red-500'}`} />
+                  <span className="text-primary-lighter min-w-0 break-words">
                     {student.admissionHistory?.length ? 'Rejoined' : 'Joined'}{' '}
                     <span className="text-primary font-medium">{formatDate(student.admissionDate)}</span>
                     {student.isActive
@@ -571,94 +728,6 @@ export default function StudentDetailPage() {
               </div>
             </div>
           )}
-
-          {/* Payment History */}
-          <div className="bg-white rounded-2xl border border-primary-100 overflow-hidden">
-            <div className="p-5 border-b border-primary-50 flex items-center justify-between">
-              <h2 className="font-semibold text-primary">Payment History</h2>
-              <span className="text-xs text-primary-lighter">{payments.length} records</span>
-            </div>
-            {payments.length === 0 ? (
-              <div className="p-8 text-center text-primary-lighter text-sm">No payments recorded yet</div>
-            ) : (
-              <div className="table-responsive">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-primary-50">
-                      <th className="text-left px-5 py-3 text-xs font-semibold text-primary-lighter uppercase tracking-wide">Date</th>
-                      <th className="text-left px-5 py-3 text-xs font-semibold text-primary-lighter uppercase tracking-wide">Amount</th>
-                      <th className="text-left px-5 py-3 text-xs font-semibold text-primary-lighter uppercase tracking-wide">Mode</th>
-                      <th className="text-left px-5 py-3 text-xs font-semibold text-primary-lighter uppercase tracking-wide">Covers</th>
-                      <th className="px-5 py-3" />
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-primary-50">
-                    {payments.map((p) => (
-                      pendingDeletePayment === p._id ? (
-                        <tr key={p._id} className="bg-red-50">
-                          <td colSpan={5} className="px-5 py-3.5">
-                            <div className="flex items-center justify-between gap-3">
-                              <span className="text-sm text-red-700 font-medium">
-                                Delete {formatCurrency(p.amount)} payment on {formatDate(p.receivedDate)}?
-                              </span>
-                              <div className="flex gap-2 flex-shrink-0">
-                                <button onClick={() => setPendingDeletePayment(null)}
-                                  className="px-3 py-1.5 rounded-lg border border-primary-200 text-primary text-xs hover:bg-white transition-colors">
-                                  Cancel
-                                </button>
-                                <button
-                                  onClick={() => handleDeletePayment(p._id)}
-                                  disabled={deletingPaymentId === p._id}
-                                  className="px-3 py-1.5 rounded-lg bg-red-600 text-white text-xs font-semibold hover:bg-red-700 disabled:opacity-60 transition-colors flex items-center gap-1.5">
-                                  {deletingPaymentId === p._id
-                                    ? <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin inline-block" />
-                                    : <Trash2 size={12} />}
-                                  Delete
-                                </button>
-                              </div>
-                            </div>
-                          </td>
-                        </tr>
-                      ) : (
-                        <tr key={p._id} className="hover:bg-primary-50 transition-colors group">
-                          <td className="px-5 py-3.5 text-sm text-primary">{formatDate(p.receivedDate)}</td>
-                          <td className="px-5 py-3.5 text-sm font-semibold text-primary">{formatCurrency(p.amount)}</td>
-                          <td className="px-5 py-3.5">
-                            <span className={`text-xs px-2 py-1 rounded-full ${p.mode === 'cash' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
-                              {p.mode}{p.referenceNo ? ` · ${p.referenceNo}` : ''}
-                            </span>
-                          </td>
-                          <td className="px-5 py-3.5 text-xs text-primary-lighter">
-                            {formatCoverageLabel(p) || '—'}
-                          </td>
-                          <td className="px-5 py-3.5">
-                            <div className="flex items-center justify-end gap-1.5">
-                              {canPay && (() => {
-                                const waUrl = getPaymentRecordedWhatsAppUrl({ ...p, student });
-                                return waUrl ? (
-                                  <a href={waUrl} target="_blank" rel="noopener noreferrer"
-                                    title="Send payment confirmation via WhatsApp"
-                                    className="flex items-center justify-center w-7 h-7 rounded-lg bg-green-500 text-white hover:bg-green-600 active:scale-95 transition-all">
-                                    <WhatsAppIcon size={13} />
-                                  </a>
-                                ) : null;
-                              })()}
-                              {canModify && (
-                                <button onClick={() => setPendingDeletePayment(p._id)}
-                                  className="p-1.5 rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 transition-all">
-                                  <Trash2 size={14} />
-                                </button>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      )
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
         </div>
       </div>
 
