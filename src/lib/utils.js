@@ -11,6 +11,10 @@ import {
 export const toLocalDateStr = (date) =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 
+// Returns YYYY-MM-DDTHH:mm in LOCAL time — for <input type="datetime-local">
+export const toLocalDateTimeStr = (date) =>
+  `${toLocalDateStr(date)}T${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+
 export const MONTH_NAMES = [
   "January",
   "February",
@@ -54,11 +58,14 @@ export const computeStudentPaidThrough = (admissionDate, payments) => {
   const base = admissionDate ? new Date(admissionDate) : new Date();
   const withCoversUntil = (payments || []).filter((p) => p.coversUntil);
   if (withCoversUntil.length) {
-    return withCoversUntil.reduce(
+    const latest = withCoversUntil.reduce(
       (latest, p) =>
         new Date(p.coversUntil) > latest ? new Date(p.coversUntil) : latest,
       new Date(withCoversUntil[0].coversUntil),
     );
+    // Readmitted students: admissionDate jumps to the readmission date, so
+    // stale coversUntil dates from the previous stint must not win.
+    return latest > base ? latest : base;
   }
   const totalMonths = (payments || []).reduce(
     (sum, p) => sum + (p.monthsCovered?.length || 0),
@@ -109,6 +116,13 @@ export const getPaymentStatus = (admissionDate, payments) => {
     dueDateLabel,
     paidThroughLabel,
   };
+};
+
+// Inclusive day count between two dates, rendered as "N days" — used for
+// membership stints (joined → inactive) in admission history displays.
+export const formatDaysBetween = (start, end) => {
+  const days = differenceInCalendarDays(new Date(end), new Date(start)) + 1;
+  return `${days} day${days !== 1 ? "s" : ""}`;
 };
 
 export const getMembershipDuration = (admissionDate) => {

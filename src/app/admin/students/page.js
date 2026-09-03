@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '@/lib/api';
-import { formatDate, formatCurrency, photoUrl, getWhatsAppUrl } from '@/lib/utils';
+import { formatDate, formatDateTime, formatCurrency, photoUrl, getWhatsAppUrl } from '@/lib/utils';
 import StudentAvatar from '@/components/StudentAvatar';
 
 const WhatsAppIcon = ({ size = 14 }) => (
@@ -439,6 +439,13 @@ export default function StudentsPage() {
                   {s.isActive ? 'Active' : 'Inactive'}
                 </span>
               </div>
+
+              {!s.isActive && s.inactiveDate && (
+                <div className="px-5 py-2 flex items-center gap-1.5 text-xs bg-red-50 text-red-600 border-b border-red-100">
+                  <Clock className="w-3 h-3" />
+                  Marked inactive on {formatDateTime(s.inactiveDate)}
+                </div>
+              )}
 
               {/* Card body */}
               <div className="px-5 py-3 flex items-center justify-between text-sm border-b border-primary-50">

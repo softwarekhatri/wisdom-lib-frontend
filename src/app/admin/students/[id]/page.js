@@ -5,11 +5,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import {
   ArrowLeft, User, Phone, Mail, MapPin, Calendar, IndianRupee,
-  CreditCard, Edit, Save, X, Key, Upload, Camera, Plus, Check, Clock, Trash2, AlertTriangle, Hash, Armchair
+  CreditCard, Edit, Save, X, Key, Upload, Camera, Plus, Check, Clock, Trash2, AlertTriangle, Hash, Armchair, UserX, UserCheck, History
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '@/lib/api';
-import { formatDate, formatCurrency, getPaymentStatus, formatCoverageLabel, MONTH_NAMES, photoUrl, getWhatsAppUrl, getAdmissionWhatsAppUrl, getPaymentRecordedWhatsAppUrl, BATCHES, SHIFT_FEES, NIGHT_SHIFT, NIGHT_SHIFT_FEE, computeStandardFee, computeFlexiFee, blockNumberSpin } from '@/lib/utils';
+import { formatDate, formatDateTime, formatCurrency, getPaymentStatus, formatCoverageLabel, formatDaysBetween, MONTH_NAMES, photoUrl, getWhatsAppUrl, getAdmissionWhatsAppUrl, getPaymentRecordedWhatsAppUrl, BATCHES, SHIFT_FEES, NIGHT_SHIFT, NIGHT_SHIFT_FEE, computeStandardFee, computeFlexiFee, blockNumberSpin, toLocalDateStr, toLocalDateTimeStr } from '@/lib/utils';
 import StudentAvatar from '@/components/StudentAvatar';
 
 const WhatsAppIcon = ({ size = 16 }) => (
@@ -49,6 +49,9 @@ export default function StudentDetailPage() {
   const [deletingStudent, setDeletingStudent] = useState(false);
   const [pendingDeletePayment, setPendingDeletePayment] = useState(null);
   const [deletingPaymentId, setDeletingPaymentId] = useState(null);
+  const [statusModal, setStatusModal] = useState(null); // null | 'deactivate' | 'readmit'
+  const [statusDate, setStatusDate] = useState('');
+  const [statusSaving, setStatusSaving] = useState(false);
 
   const fetchData = async () => {
     setLoading(true);
@@ -133,6 +136,38 @@ export default function StudentDetailPage() {
       toast.error(err?.response?.data?.message || 'Failed to delete student');
       setDeletingStudent(false);
     }
+  };
+
+  const openStatusModal = (mode) => {
+    setStatusDate(mode === 'deactivate' ? toLocalDateTimeStr(new Date()) : toLocalDateStr(new Date()));
+    setStatusModal(mode);
+  };
+
+  const handleStatusChange = async () => {
+    if (!statusDate) return toast.error('Please pick a date');
+    setStatusSaving(true);
+    try {
+      if (statusModal === 'deactivate') {
+        // statusDate is a naive "datetime-local" string (e.g. "2026-09-03T22:40")
+        // with no timezone info. The browser reliably parses it as the user's
+        // OWN local time, so convert it to an absolute ISO instant here — if we
+        // sent the naive string as-is, the backend (which may run in a
+        // different timezone, e.g. UTC on the server) would reinterpret those
+        // same digits as ITS local time and silently shift the clock.
+        const inactiveDate = new Date(statusDate).toISOString();
+        const { data } = await api.patch(`/students/${id}/deactivate`, { inactiveDate });
+        setStudent(data.student);
+        toast.success('Student marked inactive');
+      } else {
+        const { data } = await api.patch(`/students/${id}/readmit`, { readmissionDate: statusDate });
+        setStudent(data.student);
+        toast.success('Student readmitted — due date resets from today');
+      }
+      setStatusModal(null);
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Failed to update status');
+    }
+    setStatusSaving(false);
   };
 
   const handleDeletePayment = async (paymentId) => {
@@ -244,6 +279,31 @@ export default function StudentDetailPage() {
             </div>
 
             <div className="p-5 space-y-3">
+              <div className="flex items-center gap-2">
+                <span className={`flex-1 text-center py-2 px-3 rounded-xl text-sm font-medium ${
+                  student.isActive
+                    ? 'bg-green-50 text-green-700 border border-green-200'
+                    : 'bg-red-50 text-red-700 border border-red-200'
+                }`}>
+                  {student.isActive ? 'Active Member' : `Inactive${student.inactiveDate ? ` since ${formatDateTime(student.inactiveDate)}` : ''}`}
+                </span>
+                {canModify && (
+                  student.isActive ? (
+                    <button onClick={() => openStatusModal('deactivate')}
+                      title="Mark Inactive"
+                      className="flex-shrink-0 p-2.5 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 transition-colors">
+                      <UserX size={16} />
+                    </button>
+                  ) : (
+                    <button onClick={() => openStatusModal('readmit')}
+                      title="Readmit Student"
+                      className="flex-shrink-0 p-2.5 rounded-xl border border-green-200 text-green-600 hover:bg-green-50 transition-colors">
+                      <UserCheck size={16} />
+                    </button>
+                  )
+                )}
+              </div>
+
               <div className={`text-center py-2 px-3 rounded-xl text-sm font-medium ${
                 payStatus.status === 'due' ? 'bg-red-50 text-red-700 border border-red-200' :
                 payStatus.status === 'due-soon' ? 'bg-orange-50 text-orange-700 border border-orange-200' :
@@ -255,7 +315,7 @@ export default function StudentDetailPage() {
               <div className="space-y-2 text-sm">
                 {[
                   { icon: Hash, label: 'Username', value: student.username || '—', copyable: true },
-                  { icon: Calendar, label: 'Joined', value: formatDate(student.admissionDate) },
+                  { icon: Calendar, label: student.admissionHistory?.length ? 'Rejoined' : 'Joined', value: formatDate(student.admissionDate) },
                   { icon: IndianRupee, label: 'Fees', value: (() => { const std = computeStandardFee((student.seatAssignments || []).map(a => a.batch)); return `${formatCurrency(student.libraryFees)}/mo${std && std !== student.libraryFees ? ` (standard: ${formatCurrency(std)})` : ''}`; })() },
                   { icon: Phone, label: 'Mobile', value: student.mobile || '—' },
                   { icon: Phone, label: 'WhatsApp', value: student.whatsappNumber || student.mobile || '—' },
@@ -470,13 +530,47 @@ export default function StudentDetailPage() {
                     </div>
                   )}
                 </div>
-                <div className="sm:col-span-2 flex items-center gap-2">
-                  <input type="checkbox" id="isActive" checked={form.isActive} onChange={e => setForm(f => ({ ...f, isActive: e.target.checked }))} className="w-4 h-4 accent-primary" />
-                  <label htmlFor="isActive" className="text-sm text-primary font-medium cursor-pointer">Active Member</label>
-                </div>
+                <p className="sm:col-span-2 text-xs text-primary-lighter -mt-1">
+                  Active/Inactive status is managed via the button next to the status badge on the left — not from this form, so a rejoin always records proper history.
+                </p>
               </form>
             </div>
           ) : null}
+
+          {/* Membership History — only shown once there's more than a single, ongoing stint */}
+          {(student.admissionHistory?.length > 0 || !student.isActive) && (
+            <div className="bg-white rounded-2xl border border-primary-100 overflow-hidden">
+              <div className="p-5 border-b border-primary-50 flex items-center gap-2">
+                <History className="w-4 h-4 text-primary-lighter" />
+                <h2 className="font-semibold text-primary">Membership History</h2>
+              </div>
+              <div className="p-5 space-y-3">
+                {student.admissionHistory?.map((h, i) => (
+                  <div key={i} className="flex items-center gap-3 text-sm">
+                    <span className="w-2 h-2 rounded-full bg-primary-200 flex-shrink-0" />
+                    <span className="text-primary-lighter">
+                      Joined <span className="text-primary font-medium">{formatDate(h.admissionDate)}</span>
+                      {' '}&rarr; Inactive from <span className="text-primary font-medium">{formatDateTime(h.inactiveDate)}</span>
+                      {' '}<span className="text-xs text-primary-lighter">({formatDaysBetween(h.admissionDate, h.inactiveDate)})</span>
+                    </span>
+                  </div>
+                ))}
+                <div className="flex items-center gap-3 text-sm">
+                  <span className={`w-2 h-2 rounded-full flex-shrink-0 ${student.isActive ? 'bg-green-500' : 'bg-red-500'}`} />
+                  <span className="text-primary-lighter">
+                    {student.admissionHistory?.length ? 'Rejoined' : 'Joined'}{' '}
+                    <span className="text-primary font-medium">{formatDate(student.admissionDate)}</span>
+                    {student.isActive
+                      ? ' — currently active'
+                      : <>
+                          {' '}&rarr; Inactive from <span className="text-primary font-medium">{formatDateTime(student.inactiveDate)}</span>
+                          {' '}<span className="text-xs text-primary-lighter">({formatDaysBetween(student.admissionDate, student.inactiveDate)})</span>
+                        </>}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Payment History */}
           <div className="bg-white rounded-2xl border border-primary-100 overflow-hidden">
@@ -624,6 +718,64 @@ export default function StudentDetailPage() {
                     ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                     : <Trash2 size={14} />}
                   {deletingStudent ? 'Deleting…' : 'Delete Permanently'}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Mark Inactive / Readmit Modal */}
+      <AnimatePresence>
+        {statusModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl"
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${statusModal === 'deactivate' ? 'bg-red-100' : 'bg-green-100'}`}>
+                  {statusModal === 'deactivate'
+                    ? <UserX className="w-5 h-5 text-red-600" />
+                    : <UserCheck className="w-5 h-5 text-green-600" />}
+                </div>
+                <div>
+                  <h3 className="font-bold text-primary text-base">
+                    {statusModal === 'deactivate' ? 'Mark Inactive' : 'Readmit Student'}
+                  </h3>
+                  <p className="text-xs text-primary-lighter mt-0.5">{student.fullName}</p>
+                </div>
+              </div>
+
+              {statusModal === 'readmit' && (
+                <p className="text-xs text-primary-lighter mb-3">
+                  Same profile, seats and payment history are kept — only the admission date resets, so fee dues start fresh from the readmission date. The prior stint is saved to their membership history.
+                </p>
+              )}
+
+              <label className="block text-xs font-semibold text-primary mb-1.5">
+                {statusModal === 'deactivate' ? 'Inactive Date & Time' : 'Readmission Date'}
+              </label>
+              <input
+                type={statusModal === 'deactivate' ? 'datetime-local' : 'date'}
+                value={statusDate}
+                onChange={e => setStatusDate(e.target.value)}
+                className="input-field mb-4"
+              />
+
+              <div className="flex gap-3">
+                <button onClick={() => setStatusModal(null)} className="flex-1 px-4 py-2.5 rounded-xl border border-primary-200 text-primary text-sm hover:bg-primary-50">
+                  Cancel
+                </button>
+                <button
+                  onClick={handleStatusChange}
+                  disabled={statusSaving}
+                  className={`flex-1 px-4 py-2.5 rounded-xl text-white text-sm font-bold transition-colors disabled:opacity-60 flex items-center justify-center gap-2 ${statusModal === 'deactivate' ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}`}
+                >
+                  {statusSaving && <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
+                  {statusModal === 'deactivate' ? 'Mark Inactive' : 'Readmit'}
                 </button>
               </div>
             </motion.div>
