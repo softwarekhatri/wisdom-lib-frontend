@@ -56,18 +56,23 @@ export const formatCurrency = (amount) =>
 // old whole-months-from-admission-date formula.
 export const computeStudentPaidThrough = (admissionDate, payments) => {
   const base = admissionDate ? new Date(admissionDate) : new Date();
-  const withCoversUntil = (payments || []).filter((p) => p.coversUntil);
+  // Readmitted students: admissionDate jumps to the readmission date, so
+  // payments from before that (the prior stint) must not carry coverage
+  // forward — otherwise a readmitted-but-unpaid student shows a due date
+  // months away instead of due immediately.
+  const currentStint = (payments || []).filter(
+    (p) => !p.receivedDate || new Date(p.receivedDate) >= base,
+  );
+  const withCoversUntil = currentStint.filter((p) => p.coversUntil);
   if (withCoversUntil.length) {
     const latest = withCoversUntil.reduce(
       (latest, p) =>
         new Date(p.coversUntil) > latest ? new Date(p.coversUntil) : latest,
       new Date(withCoversUntil[0].coversUntil),
     );
-    // Readmitted students: admissionDate jumps to the readmission date, so
-    // stale coversUntil dates from the previous stint must not win.
     return latest > base ? latest : base;
   }
-  const totalMonths = (payments || []).reduce(
+  const totalMonths = currentStint.reduce(
     (sum, p) => sum + (p.monthsCovered?.length || 0),
     0,
   );

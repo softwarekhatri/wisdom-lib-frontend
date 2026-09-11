@@ -491,7 +491,9 @@ export default function StudentsPage() {
                 {canPay && (
                   <button
                     onClick={() => setPayStudent(s)}
-                    className="flex items-center justify-center gap-1 py-2.5 rounded-xl bg-gold text-primary-dark text-xs font-bold hover:bg-gold-light active:scale-95 transition-all shadow-sm"
+                    disabled={!s.isActive}
+                    title={s.isActive ? 'Add Payment' : 'Readmit the student before recording a payment'}
+                    className="flex items-center justify-center gap-1 py-2.5 rounded-xl bg-gold text-primary-dark text-xs font-bold hover:bg-gold-light active:scale-95 transition-all shadow-sm disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100"
                   >
                     <CreditCard className="w-3.5 h-3.5" />
                     Pay

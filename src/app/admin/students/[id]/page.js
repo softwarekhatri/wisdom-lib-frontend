@@ -228,8 +228,9 @@ export default function StudentDetailPage() {
                 </button>
               )}
               {canPay && (
-                <button onClick={() => setShowPaymentModal(true)} title="Add Payment"
-                  className="btn-primary flex items-center gap-1.5 text-sm px-2.5 sm:px-4 py-2">
+                <button onClick={() => setShowPaymentModal(true)} disabled={!student.isActive}
+                  title={student.isActive ? 'Add Payment' : 'Readmit the student before recording a payment'}
+                  className="btn-primary flex items-center gap-1.5 text-sm px-2.5 sm:px-4 py-2 disabled:opacity-40 disabled:cursor-not-allowed">
                   <Plus size={16} />
                   <span className="hidden sm:inline">Add Payment</span>
                 </button>

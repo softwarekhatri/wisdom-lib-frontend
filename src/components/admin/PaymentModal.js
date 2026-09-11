@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, IndianRupee, Banknote, CreditCard, CheckCircle, Loader2, CalendarCheck, ArrowRight } from 'lucide-react';
+import { X, IndianRupee, Banknote, CreditCard, CheckCircle, Loader2, CalendarCheck, ArrowRight, UserX } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '@/lib/api';
 import { formatCurrency, SHIFT_FEES, photoUrl, blockNumberSpin, computeStudentPaidThrough, generateMonthOptions, toLocalDateStr } from '@/lib/utils';
@@ -183,7 +183,17 @@ export default function PaymentModal({ student, onClose, onSuccess }) {
           </button>
         </div>
 
-        {fetchingHistory ? (
+        {student && !student.isActive ? (
+          <div className="p-6 text-center">
+            <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-3">
+              <UserX className="w-6 h-6 text-red-600" />
+            </div>
+            <p className="text-sm font-semibold text-primary mb-1">Student is inactive</p>
+            <p className="text-xs text-primary-lighter">
+              Payments can only be recorded for active students. Readmit {student.fullName} from their profile page first.
+            </p>
+          </div>
+        ) : fetchingHistory ? (
           <div className="flex items-center justify-center gap-3 py-14 text-primary-lighter text-sm">
             <Loader2 className="w-5 h-5 animate-spin" />
             Loading payment history…
