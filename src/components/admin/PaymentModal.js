@@ -100,7 +100,8 @@ export default function PaymentModal({ student, onClose, onSuccess }) {
     ? generateMonthOptions(periodStart.getFullYear(), periodStart.getMonth() + 1, numMonths)
     : [];
   const parsedCoversUntil = parsedAmt > 0 && !noMonthCoverage && coversUntil ? new Date(coversUntil) : null;
-  const newNextDue        = parsedCoversUntil ? addDays(parsedCoversUntil, 1) : null;
+  // Due date = the coverage end date itself (a renewal date, not a grace day after).
+  const newNextDue        = parsedCoversUntil;
   const paidThroughStr    = parsedCoversUntil ? format(parsedCoversUntil, 'MMM d, yyyy') : null;
   const dueDateStr        = newNextDue ? format(newNextDue, 'MMMM d, yyyy') : null;
   const coverageDays      = parsedCoversUntil ? differenceInCalendarDays(parsedCoversUntil, currentPaidThrough) : 0;
@@ -167,7 +168,7 @@ export default function PaymentModal({ student, onClose, onSuccess }) {
               {fetchingHistory ? (
                 <p className="text-white/55 text-xs">Loading history…</p>
               ) : (() => {
-                const days2 = differenceInDays(addDays(currentPaidThrough, 1), new Date());
+                const days2 = differenceInDays(currentPaidThrough, new Date());
                 const col   = days2 < 0 ? 'text-red-300' : days2 <= 7 ? 'text-orange-300' : 'text-green-300';
                 return (
                   <p className={`text-xs font-medium ${col}`}>

@@ -628,9 +628,8 @@ export default function AdmissionModal({ onClose, onSuccess }) {
               const remainder = fee > 0 ? parsedAmt - fee * numMonths : 0;
               const parsedCoversUntil =
                 parsedAmt > 0 && coversUntil ? new Date(coversUntil) : null;
-              const newNextDue = parsedCoversUntil
-                ? addDays(parsedCoversUntil, 1)
-                : null;
+              // Due date = the coverage end date itself (a renewal date, not a grace day after).
+              const newNextDue = parsedCoversUntil;
               const paidThroughStr = parsedCoversUntil
                 ? format(parsedCoversUntil, "MMM d, yyyy")
                 : null;

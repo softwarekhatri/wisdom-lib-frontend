@@ -155,9 +155,20 @@ const WaIcon = () => (
 function buildWaReminderUrl(student) {
   const number =
     "91" + (student.whatsappNumber || student.mobile || "").replace(/\D/g, "");
-  const dueText = student.hasDues
-    ? "Your library fee is overdue. Please pay at the earliest to keep your seat active."
-    : `Your library fee is due in ${student.daysUntilDue} day${student.daysUntilDue !== 1 ? "s" : ""}. Please pay on time to avoid interruption.`;
+
+  let dueText;
+  if (student.hasDues) {
+    dueText = "Your library fee is *overdue*. Please pay at the earliest to keep your seat active.";
+  } else if (student.daysUntilDue === 0) {
+    dueText = "Your library fee is due *today*. Please pay on time to avoid interruption.";
+  } else if (student.daysUntilDue === 1) {
+    dueText = "Your library fee is due *tomorrow*. Please pay on time to avoid interruption.";
+  } else if (student.daysUntilDue <= 5) {
+    dueText = `Your library fee is due in *${student.daysUntilDue} days*. Please pay on time to avoid interruption.`;
+  } else {
+    dueText = `Your library fee is due in ${student.daysUntilDue} days. Please pay on time to avoid interruption.`;
+  }
+
   const msg = encodeURIComponent(
     `Hi ${student.fullName},\n\n${dueText}\n\nThank you,\n*Wisdom Library*`,
   );

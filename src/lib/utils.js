@@ -4,7 +4,6 @@ import {
   differenceInDays,
   differenceInCalendarDays,
   addMonths,
-  addDays,
 } from "date-fns";
 
 // Returns YYYY-MM-DD in LOCAL time — avoids UTC offset shifting the date (e.g. IST midnight = prev day in UTC)
@@ -80,12 +79,13 @@ export const computeStudentPaidThrough = (admissionDate, payments) => {
 };
 
 // admissionDate: ISO string or Date. payments: the student's Payment docs.
-// Due date = paid-through date + 1 day
-// e.g. admitted May 12, paid 1 month → paid through Jun 12 → due Jun 13
+// Due date = the paid-through date itself (a monthly renewal date, not a
+// grace day after) — e.g. admitted May 12, paid 1 month → paid through
+// Jun 12 → due Jun 12.
 export const getPaymentStatus = (admissionDate, payments) => {
   const now = new Date();
   const paidThroughDate = computeStudentPaidThrough(admissionDate, payments);
-  const dueDate = addDays(paidThroughDate, 1);
+  const dueDate = paidThroughDate;
   const daysUntilDue = differenceInDays(dueDate, now);
   const dueDateLabel = format(dueDate, "MMMM d, yyyy");
   const paidThroughLabel = format(paidThroughDate, "MMMM d, yyyy");
@@ -216,6 +216,24 @@ export const getAdmissionWhatsAppUrl = (student) => {
   return `https://wa.me/${num}?text=${encodeURIComponent(msg)}`;
 };
 
+// WhatsApp-bold ("*Today*", "*Tomorrow*", "*Overdue*", "*3 days*"...) label for
+// how soon a payment is due — surfaces urgency in reminder messages. Beyond 5
+// days it falls back to the plain formatted date (not bold), same threshold
+// getPaymentStatus uses for its "due-soon" status.
+export const formatDueDateForWhatsApp = (dueDate, daysUntilDue, overdue = daysUntilDue < 0) => {
+  if (overdue) return "*Overdue*";
+  if (daysUntilDue === 0) return "*Today*";
+  if (daysUntilDue === 1) return "*Tomorrow*";
+  if (daysUntilDue <= 5) return `*${daysUntilDue} days*`;
+  return dueDate
+    ? new Date(dueDate).toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      })
+    : "soon";
+};
+
 export const getWhatsAppUrl = (student, nextDueDate, libraryFees) => {
   const rawPhone = student.whatsappNumber || student.mobile;
   if (!rawPhone) return null;
@@ -224,11 +242,7 @@ export const getWhatsAppUrl = (student, nextDueDate, libraryFees) => {
   else if (num.startsWith("0") && num.length === 11) num = "91" + num.slice(1);
 
   const dueDateStr = nextDueDate
-    ? new Date(nextDueDate).toLocaleDateString("en-IN", {
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-      })
+    ? formatDueDateForWhatsApp(nextDueDate, differenceInDays(new Date(nextDueDate), new Date()))
     : "soon";
   const fee = libraryFees || student.libraryFees || 0;
 
