@@ -1,7 +1,6 @@
 import {
   format,
   formatDistance,
-  differenceInDays,
   differenceInCalendarDays,
   addMonths,
 } from "date-fns";
@@ -33,6 +32,13 @@ export const formatDate = (date, fmt = "dd MMM yyyy") => {
   if (!date) return "—";
   return format(new Date(date), fmt);
 };
+
+// Calendar-day count until a date (negative if in the past) — for UI color
+// thresholds like "is this due date red/orange/green". Deliberately NOT
+// date-fns's differenceInDays, which measures raw 24-hour periods and is
+// sensitive to time-of-day — it can undercount by 1 depending on what time
+// "now" is versus the target date's midnight timestamp.
+export const daysUntil = (date) => differenceInCalendarDays(new Date(date), new Date());
 
 export const formatDateTime = (date, fmt = "dd MMM yyyy, hh:mm a") => {
   if (!date) return "—";
@@ -86,7 +92,10 @@ export const getPaymentStatus = (admissionDate, payments) => {
   const now = new Date();
   const paidThroughDate = computeStudentPaidThrough(admissionDate, payments);
   const dueDate = paidThroughDate;
-  const daysUntilDue = differenceInDays(dueDate, now);
+  // Calendar-day difference, not raw ms/hours — differenceInDays is
+  // time-of-day sensitive and can undercount by 1 depending on what time
+  // "now" is versus the due date's midnight timestamp.
+  const daysUntilDue = differenceInCalendarDays(dueDate, now);
   const dueDateLabel = format(dueDate, "MMMM d, yyyy");
   const paidThroughLabel = format(paidThroughDate, "MMMM d, yyyy");
 
@@ -242,7 +251,7 @@ export const getWhatsAppUrl = (student, nextDueDate, libraryFees) => {
   else if (num.startsWith("0") && num.length === 11) num = "91" + num.slice(1);
 
   const dueDateStr = nextDueDate
-    ? formatDueDateForWhatsApp(nextDueDate, differenceInDays(new Date(nextDueDate), new Date()))
+    ? formatDueDateForWhatsApp(nextDueDate, differenceInCalendarDays(new Date(nextDueDate), new Date()))
     : "soon";
   const fee = libraryFees || student.libraryFees || 0;
 

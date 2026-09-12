@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '@/lib/api';
-import { formatDate, formatDateTime, formatCurrency, photoUrl, getWhatsAppUrl } from '@/lib/utils';
+import { formatDate, formatDateTime, formatCurrency, photoUrl, getWhatsAppUrl, daysUntil } from '@/lib/utils';
 import StudentAvatar from '@/components/StudentAvatar';
 
 const WhatsAppIcon = ({ size = 14 }) => (
@@ -472,7 +472,7 @@ export default function StudentsPage() {
               )}
               {/* Next Due Date */}
               {(() => {
-                const days = s.nextDueDate ? Math.ceil((new Date(s.nextDueDate) - new Date()) / 86400000) : null;
+                const days = s.nextDueDate ? daysUntil(s.nextDueDate) : null;
                 const col = days === null ? 'text-primary-lighter' : days < 0 ? 'text-red-600' : days <= 7 ? 'text-orange-500' : 'text-green-600';
                 return (
                   <div className="px-5 py-2.5 flex items-center justify-between text-xs border-b border-primary-50">

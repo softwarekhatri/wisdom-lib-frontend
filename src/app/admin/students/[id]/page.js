@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '@/lib/api';
-import { formatDate, formatDateTime, formatCurrency, getPaymentStatus, formatCoverageLabel, formatDaysBetween, MONTH_NAMES, photoUrl, getWhatsAppUrl, getAdmissionWhatsAppUrl, getPaymentRecordedWhatsAppUrl, BATCHES, SHIFT_FEES, NIGHT_SHIFT, NIGHT_SHIFT_FEE, computeStandardFee, computeFlexiFee, blockNumberSpin, toLocalDateStr, toLocalDateTimeStr } from '@/lib/utils';
+import { formatDate, formatDateTime, formatCurrency, getPaymentStatus, formatCoverageLabel, formatDaysBetween, daysUntil, MONTH_NAMES, photoUrl, getWhatsAppUrl, getAdmissionWhatsAppUrl, getPaymentRecordedWhatsAppUrl, BATCHES, SHIFT_FEES, NIGHT_SHIFT, NIGHT_SHIFT_FEE, computeStandardFee, computeFlexiFee, blockNumberSpin, toLocalDateStr, toLocalDateTimeStr } from '@/lib/utils';
 import StudentAvatar from '@/components/StudentAvatar';
 
 const WhatsAppIcon = ({ size = 16 }) => (
@@ -338,7 +338,7 @@ export default function StudentDetailPage() {
                 ))}
                 {/* Next Due Date */}
                 {(() => {
-                  const days = student.nextDueDate ? Math.ceil((new Date(student.nextDueDate) - new Date()) / 86400000) : null;
+                  const days = student.nextDueDate ? daysUntil(student.nextDueDate) : null;
                   const col = days === null ? 'text-primary' : days < 0 ? 'text-red-600' : days <= 7 ? 'text-orange-500' : 'text-green-600';
                   return (
                     <div className="flex items-start gap-2 text-primary-lighter">
