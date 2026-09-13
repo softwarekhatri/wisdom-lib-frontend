@@ -84,20 +84,21 @@ export const computeStudentPaidThrough = (admissionDate, payments) => {
   return addMonths(base, totalMonths);
 };
 
-// admissionDate: ISO string or Date. payments: the student's Payment docs.
-// Due date = the paid-through date itself (a monthly renewal date, not a
-// grace day after) — e.g. admitted May 12, paid 1 month → paid through
-// Jun 12 → due Jun 12.
-export const getPaymentStatus = (admissionDate, payments) => {
+// Derives the status badge (Overdue / Due soon / Paid) from a single due
+// date — the student's stored `nextDueDate` (see backend
+// services/dueDateService.js), which is the same value the student card,
+// dues report, and seat map all read. Deriving the badge from this one
+// field, rather than recomputing it from payments on the client, is what
+// keeps the profile page's badge and its "Next Due" field from disagreeing
+// with each other (e.g. after an admin manually overrides the due date).
+export const getPaymentStatusFromDueDate = (dueDate) => {
   const now = new Date();
-  const paidThroughDate = computeStudentPaidThrough(admissionDate, payments);
-  const dueDate = paidThroughDate;
+  const due = dueDate ? new Date(dueDate) : now;
   // Calendar-day difference, not raw ms/hours — differenceInDays is
   // time-of-day sensitive and can undercount by 1 depending on what time
   // "now" is versus the due date's midnight timestamp.
-  const daysUntilDue = differenceInCalendarDays(dueDate, now);
-  const dueDateLabel = format(dueDate, "MMMM d, yyyy");
-  const paidThroughLabel = format(paidThroughDate, "MMMM d, yyyy");
+  const daysUntilDue = differenceInCalendarDays(due, now);
+  const dueDateLabel = format(due, "MMMM d, yyyy");
 
   if (daysUntilDue < 0) {
     return {
@@ -105,9 +106,9 @@ export const getPaymentStatus = (admissionDate, payments) => {
       label: "Payment Overdue",
       color: "red",
       daysUntilDue,
-      dueDate,
+      dueDate: due,
       dueDateLabel,
-      paidThroughLabel,
+      paidThroughLabel: dueDateLabel,
     };
   }
   if (daysUntilDue <= 5) {
@@ -116,19 +117,19 @@ export const getPaymentStatus = (admissionDate, payments) => {
       label: `Due in ${daysUntilDue} day${daysUntilDue !== 1 ? "s" : ""}`,
       color: "orange",
       daysUntilDue,
-      dueDate,
+      dueDate: due,
       dueDateLabel,
-      paidThroughLabel,
+      paidThroughLabel: dueDateLabel,
     };
   }
   return {
     status: "paid",
-    label: `Paid upto ${paidThroughLabel}`,
+    label: `Paid upto ${dueDateLabel}`,
     color: "green",
     daysUntilDue,
-    dueDate,
+    dueDate: due,
     dueDateLabel,
-    paidThroughLabel,
+    paidThroughLabel: dueDateLabel,
   };
 };
 
@@ -228,7 +229,7 @@ export const getAdmissionWhatsAppUrl = (student) => {
 // WhatsApp-bold ("*Today*", "*Tomorrow*", "*Overdue*", "*3 days*"...) label for
 // how soon a payment is due — surfaces urgency in reminder messages. Beyond 5
 // days it falls back to the plain formatted date (not bold), same threshold
-// getPaymentStatus uses for its "due-soon" status.
+// getPaymentStatusFromDueDate uses for its "due-soon" status.
 export const formatDueDateForWhatsApp = (dueDate, daysUntilDue, overdue = daysUntilDue < 0) => {
   if (overdue) return "*Overdue*";
   if (daysUntilDue === 0) return "*Today*";

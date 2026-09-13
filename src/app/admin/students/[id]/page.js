@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '@/lib/api';
-import { formatDate, formatDateTime, formatCurrency, getPaymentStatus, formatCoverageLabel, formatDaysBetween, daysUntil, MONTH_NAMES, photoUrl, getWhatsAppUrl, getAdmissionWhatsAppUrl, getPaymentRecordedWhatsAppUrl, BATCHES, SHIFT_FEES, NIGHT_SHIFT, NIGHT_SHIFT_FEE, computeStandardFee, computeFlexiFee, blockNumberSpin, toLocalDateStr, toLocalDateTimeStr } from '@/lib/utils';
+import { formatDate, formatDateTime, formatCurrency, getPaymentStatusFromDueDate, formatCoverageLabel, formatDaysBetween, daysUntil, MONTH_NAMES, photoUrl, getWhatsAppUrl, getAdmissionWhatsAppUrl, getPaymentRecordedWhatsAppUrl, BATCHES, SHIFT_FEES, NIGHT_SHIFT, NIGHT_SHIFT_FEE, computeStandardFee, computeFlexiFee, blockNumberSpin, toLocalDateStr, toLocalDateTimeStr } from '@/lib/utils';
 import StudentAvatar from '@/components/StudentAvatar';
 
 const WhatsAppIcon = ({ size = 16 }) => (
@@ -52,6 +52,9 @@ export default function StudentDetailPage() {
   const [statusModal, setStatusModal] = useState(null); // null | 'deactivate' | 'readmit'
   const [statusDate, setStatusDate] = useState('');
   const [statusSaving, setStatusSaving] = useState(false);
+  const [editingDueDate, setEditingDueDate] = useState(false);
+  const [dueDateInput, setDueDateInput] = useState('');
+  const [dueDateSaving, setDueDateSaving] = useState(false);
 
   const fetchData = async () => {
     setLoading(true);
@@ -170,6 +173,38 @@ export default function StudentDetailPage() {
     setStatusSaving(false);
   };
 
+  const openDueDateEditor = () => {
+    setDueDateInput(student.nextDueDate ? toLocalDateStr(new Date(student.nextDueDate)) : '');
+    setEditingDueDate(true);
+  };
+
+  const handleSaveDueDate = async () => {
+    if (!dueDateInput) return toast.error('Please pick a date');
+    setDueDateSaving(true);
+    try {
+      const { data } = await api.patch(`/students/${id}/next-due-date`, { nextDueDate: dueDateInput });
+      setStudent(s => ({ ...s, nextDueDate: data.nextDueDate, nextDueDateOverride: data.nextDueDateOverride }));
+      setEditingDueDate(false);
+      toast.success('Next due date updated');
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Failed to update due date');
+    }
+    setDueDateSaving(false);
+  };
+
+  const handleResetDueDate = async () => {
+    setDueDateSaving(true);
+    try {
+      const { data } = await api.patch(`/students/${id}/next-due-date`, { clearOverride: true });
+      setStudent(s => ({ ...s, nextDueDate: data.nextDueDate, nextDueDateOverride: data.nextDueDateOverride }));
+      setEditingDueDate(false);
+      toast.success('Reset to auto-calculated due date');
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Failed to reset due date');
+    }
+    setDueDateSaving(false);
+  };
+
   const handleDeletePayment = async (paymentId) => {
     setDeletingPaymentId(paymentId);
     try {
@@ -197,7 +232,7 @@ export default function StudentDetailPage() {
 
   if (!student) return <div className="text-center py-16 text-primary-lighter">Student not found</div>;
 
-  const payStatus = getPaymentStatus(student.admissionDate, payments);
+  const payStatus = getPaymentStatusFromDueDate(student.nextDueDate);
 
   return (
     <div className="max-w-5xl mx-auto">
@@ -345,8 +380,19 @@ export default function StudentDetailPage() {
                       <Clock className="w-4 h-4 flex-shrink-0 mt-0.5" />
                       <span className="text-primary-lighter flex-shrink-0">Next Due:</span>
                       <span className={`font-semibold min-w-0 break-words ${col}`}>
-                        {student.nextDueDate ? formatDate(student.nextDueDate, 'dd MMM yyyy') : payStatus.dueDateLabel}
+                        {student.nextDueDate ? formatDate(student.nextDueDate, 'dd MMM yyyy') : '—'}
                       </span>
+                      {student.nextDueDateOverride && (
+                        <span className="text-[10px] font-semibold text-orange-500 bg-orange-50 border border-orange-200 rounded-full px-1.5 py-0.5 flex-shrink-0" title="Manually set — will stay until a new payment is recorded">
+                          Manual
+                        </span>
+                      )}
+                      {canModify && (
+                        <button onClick={openDueDateEditor} title="Edit due date"
+                          className="flex-shrink-0 text-primary-lighter hover:text-primary transition-colors">
+                          <Edit size={12} />
+                        </button>
+                      )}
                     </div>
                   );
                 })()}
@@ -848,6 +894,66 @@ export default function StudentDetailPage() {
                   {statusModal === 'deactivate' ? 'Mark Inactive' : 'Readmit'}
                 </button>
               </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Edit Due Date Modal */}
+      <AnimatePresence>
+        {editingDueDate && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl"
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-11 h-11 rounded-xl bg-primary-100 flex items-center justify-center flex-shrink-0">
+                  <Clock className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-primary text-base">Edit Next Due Date</h3>
+                  <p className="text-xs text-primary-lighter mt-0.5">{student.fullName}</p>
+                </div>
+              </div>
+
+              <p className="text-xs text-primary-lighter mb-3">
+                Overrides the auto-calculated due date everywhere (card, dues report, student login). It stays fixed until the next payment is recorded, which recalculates it automatically.
+              </p>
+
+              <label className="block text-xs font-semibold text-primary mb-1.5">Next Due Date</label>
+              <input
+                type="date"
+                value={dueDateInput}
+                onChange={e => setDueDateInput(e.target.value)}
+                className="input-field mb-4"
+              />
+
+              <div className="flex gap-3">
+                <button onClick={() => setEditingDueDate(false)} className="flex-1 px-4 py-2.5 rounded-xl border border-primary-200 text-primary text-sm hover:bg-primary-50">
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveDueDate}
+                  disabled={dueDateSaving}
+                  className="flex-1 btn-primary text-sm py-2.5 flex items-center justify-center gap-2"
+                >
+                  {dueDateSaving && <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
+                  Save
+                </button>
+              </div>
+
+              {student.nextDueDateOverride && (
+                <button
+                  onClick={handleResetDueDate}
+                  disabled={dueDateSaving}
+                  className="w-full mt-3 text-xs text-primary-lighter hover:text-primary underline underline-offset-2 disabled:opacity-60"
+                >
+                  Reset to auto-calculated date
+                </button>
+              )}
             </motion.div>
           </div>
         )}

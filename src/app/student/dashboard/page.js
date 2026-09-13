@@ -6,7 +6,7 @@ import api from "@/lib/api";
 import {
   formatDate,
   formatCurrency,
-  getPaymentStatus,
+  getPaymentStatusFromDueDate,
   getMembershipDuration,
   isAnniversaryWindow,
   formatCoverageLabel,
@@ -817,7 +817,7 @@ export default function StudentDashboard() {
     student?.admissionDate,
   );
 
-  const payStatus = getPaymentStatus(student?.admissionDate, allPayments);
+  const payStatus = getPaymentStatusFromDueDate(student?.nextDueDate);
   const totalPaid = allPayments.reduce((sum, p) => sum + p.amount, 0);
 
   return (
