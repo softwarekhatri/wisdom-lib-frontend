@@ -13,43 +13,6 @@ const PARTICLES = Array.from({ length: 25 }, (_, i) => ({
   opacity: Math.random() * 0.4 + 0.1,
 }));
 
-const STAR_CLIP =
-  "polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)";
-
-function OfferHighlight() {
-  return (
-    <div className="inline-block relative mb-6 mt-2">
-      <span className="absolute -top-3 left-4 z-10 px-3 py-0.5 rounded-full bg-red-600 text-white text-[9px] font-bold uppercase tracking-[0.18em] shadow-lg">
-        🎓 Admission Offer
-      </span>
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.6, delay: 0.35 }}
-        className="inline-flex items-center gap-3 pt-4 pb-2.5 px-4 rounded-2xl bg-gradient-to-r from-gold-dark via-gold to-gold-light shadow-[0_8px_24px_rgba(201,161,94,0.35)] border-2 border-red-500/30"
-      >
-        <span className="font-display font-bold text-primary-dark text-sm sm:text-lg leading-snug">
-          Pay for 3 Months &amp; Get 1 Month
-        </span>
-
-        <motion.span
-          animate={{ rotate: [-8, 4, -8], scale: [1, 1.08, 1] }}
-          transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-          className="relative inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 shrink-0"
-        >
-          <span
-            className="absolute inset-0 bg-red-600"
-            style={{ clipPath: STAR_CLIP }}
-          />
-          <span className="relative font-display font-black text-white text-[30px] sm:text-sm uppercase tracking-wide">
-            Free
-          </span>
-        </motion.span>
-      </motion.div>
-    </div>
-  );
-}
-
 const WORDS = ['Knowledge', 'Wisdom', 'Excellence', 'Growth', 'Success'];
 
 function TypeWriter() {
@@ -215,8 +178,6 @@ export default function Hero() {
             <br />
             <span className="text-white/90">Starts Here</span>
           </motion.h1>
-
-          <OfferHighlight />
 
           <motion.p
             initial={{ opacity: 0, y: 20 }}

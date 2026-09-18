@@ -1,61 +1,70 @@
 "use client";
-import { useState, useRef } from "react";
+import { useRef, useState } from "react";
+import Image from "next/image";
 import { motion, AnimatePresence, useInView } from "framer-motion";
 import { X, ZoomIn } from "lucide-react";
 
+// Real photos of the library — filenames aren't in display order, so the
+// sequence here (storefront → entrance → hall → seating → reception) is
+// chosen deliberately to read like a walkthrough.
 const GALLERY_ITEMS = [
   {
     id: 1,
-    title: "Reading Hall",
-    subtitle: "Silence & Focus",
+    src: "/images/A.jpeg",
+    title: "Wisdom Library",
+    subtitle: "Fully AC · Open 24×7",
     span: "col-span-2 row-span-2",
-    bg: "from-primary via-primary-light to-primary-dark",
   },
   {
     id: 2,
-    title: "Book Collection",
-    subtitle: "Curated Shelves",
-    span: "col-span-1 row-span-1",
-    bg: "from-amber-800 to-primary",
+    src: "/images/B.jpeg",
+    title: "Welcome Entrance",
+    subtitle: "Raja Bagicha, Rafiganj",
+    span: "col-span-1 row-span-2",
   },
   {
     id: 3,
-    title: "Study Lounge",
-    subtitle: "Comfort & Style",
+    src: "/images/D.jpeg",
+    title: "Reading Hall",
+    subtitle: "Silence & Focus",
     span: "col-span-1 row-span-1",
-    bg: "from-primary-light to-gold-dark",
   },
   {
     id: 4,
-    title: "Café Corner",
-    subtitle: "Books & Brews",
-    span: "col-span-1 row-span-2",
-    bg: "from-yellow-700 to-amber-900",
+    src: "/images/C.jpeg",
+    title: "Study Cubicles",
+    subtitle: "Individual Light & Socket",
+    span: "col-span-1 row-span-1",
   },
   {
     id: 5,
-    title: "Group Study",
-    subtitle: "Collaborative Spaces",
-    span: "col-span-1 row-span-1",
-    bg: "from-primary-dark to-primary",
+    src: "/images/F.jpeg",
+    title: "Reception Desk",
+    subtitle: "Always Here to Help",
+    span: "col-span-1 row-span-2",
   },
   {
     id: 6,
-    title: "Kids Section",
-    subtitle: "Little Readers",
-    span: "col-span-1 row-span-1",
-    bg: "from-orange-600 to-primary-light",
+    src: "/images/J.jpeg",
+    title: "Spacious Seating",
+    subtitle: "Room to Focus",
+    span: "col-span-2 row-span-1",
   },
   {
     id: 7,
-    title: "Digital Zone",
-    subtitle: "Tech-Enhanced",
-    span: "col-span-2 row-span-1",
-    bg: "from-primary via-primary-lighter to-gold-dark",
+    src: "/images/H.jpeg",
+    title: "Comfort & Focus",
+    subtitle: "Fully Air Conditioned",
+    span: "col-span-1 row-span-1",
+  },
+  {
+    id: 8,
+    src: "/images/E.jpeg",
+    title: "Private Study Booths",
+    subtitle: "Distraction-Free Corners",
+    span: "col-span-1 row-span-1",
   },
 ];
-
-const EMOJIS = ["📚", "📖", "🏛️", "☕", "✏️", "🌿", "💡"];
 
 function GalleryCard({ item, index, onOpen }) {
   const ref = useRef(null);
@@ -70,22 +79,13 @@ function GalleryCard({ item, index, onOpen }) {
       className={`${item.span} relative overflow-hidden rounded-2xl cursor-pointer group min-h-[160px]`}
       onClick={() => onOpen(item)}
     >
-      {/* Gradient placeholder (replace with actual images) */}
-      <div className={`absolute inset-0 bg-gradient-to-br ${item.bg}`} />
-
-      {/* Decorative pattern */}
-      <div
-        className="absolute inset-0 opacity-10"
-        style={{
-          backgroundImage:
-            "radial-gradient(circle at 20% 20%, rgba(255,255,255,0.3) 0%, transparent 50%)",
-        }}
+      <Image
+        src={item.src}
+        alt={item.title}
+        fill
+        sizes="(max-width: 768px) 50vw, 25vw"
+        className="object-cover group-hover:scale-105 transition-transform duration-500"
       />
-
-      {/* Emoji decoration */}
-      <div className="absolute top-4 right-4 text-2xl opacity-30 group-hover:opacity-60 transition-opacity">
-        {EMOJIS[index % EMOJIS.length]}
-      </div>
 
       {/* Overlay on hover */}
       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-300" />
@@ -134,7 +134,7 @@ export default function Gallery() {
 
         {/* Masonry-style grid */}
         <div
-          className="grid grid-cols-2 md:grid-cols-4 gap-4"
+          className="grid grid-cols-2 md:grid-cols-4 gap-4 [grid-auto-flow:dense]"
           style={{ gridAutoRows: "160px" }}
         >
           {GALLERY_ITEMS.map((item, i) => (
@@ -146,13 +146,6 @@ export default function Gallery() {
             />
           ))}
         </div>
-
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.8 }}
-          className="text-center text-primary-lighter text-sm mt-8"
-        ></motion.p>
       </div>
 
       {/* Lightbox */}
@@ -173,12 +166,14 @@ export default function Gallery() {
               className="relative max-w-2xl w-full rounded-3xl overflow-hidden shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             >
-              <div
-                className={`h-80 bg-gradient-to-br ${selected.bg} flex items-center justify-center`}
-              >
-                <div className="text-7xl">
-                  {EMOJIS[selected.id % EMOJIS.length]}
-                </div>
+              <div className="relative h-80 bg-primary-100">
+                <Image
+                  src={selected.src}
+                  alt={selected.title}
+                  fill
+                  sizes="(max-width: 672px) 100vw, 672px"
+                  className="object-cover"
+                />
               </div>
               <div className="bg-white p-6">
                 <h3 className="font-display font-bold text-primary text-xl">
