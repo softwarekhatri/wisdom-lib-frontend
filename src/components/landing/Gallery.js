@@ -1,65 +1,67 @@
 "use client";
 import { useRef, useState } from "react";
-import Image from "next/image";
 import { motion, AnimatePresence, useInView } from "framer-motion";
 import { X, ZoomIn } from "lucide-react";
 
-// Real photos of the library — filenames aren't in display order, so the
-// sequence here (storefront → entrance → hall → seating → reception) is
-// chosen deliberately to read like a walkthrough.
+// Hosted on Cloudinary (Websites/Wisdom Library Gallery folder — see
+// backend/scripts/uploadGalleryImages.js) rather than served from /public via
+// Next's Image Optimization API: that pipeline works in local dev but the
+// deployed images 404'd on Vercel, so plain <img> tags against a CDN URL
+// side-step it entirely. f_auto,q_auto lets Cloudinary pick the best
+// format/quality per requesting browser.
 const GALLERY_ITEMS = [
   {
     id: 1,
-    src: "/images/A.jpeg",
+    src: "https://res.cloudinary.com/plpnaehl/image/upload/f_auto,q_auto/v1789729681/Websites/Wisdom%20Library%20Gallery/wisdom-library-storefront.jpg",
     title: "Wisdom Library",
     subtitle: "Fully AC · Open 24×7",
     span: "col-span-2 row-span-2",
   },
   {
     id: 2,
-    src: "/images/B.jpeg",
+    src: "https://res.cloudinary.com/plpnaehl/image/upload/f_auto,q_auto/v1789729683/Websites/Wisdom%20Library%20Gallery/welcome-entrance.jpg",
     title: "Welcome Entrance",
     subtitle: "Raja Bagicha, Rafiganj",
     span: "col-span-1 row-span-2",
   },
   {
     id: 3,
-    src: "/images/D.jpeg",
+    src: "https://res.cloudinary.com/plpnaehl/image/upload/f_auto,q_auto/v1789729684/Websites/Wisdom%20Library%20Gallery/reading-hall.jpg",
     title: "Reading Hall",
     subtitle: "Silence & Focus",
     span: "col-span-1 row-span-1",
   },
   {
     id: 4,
-    src: "/images/C.jpeg",
+    src: "https://res.cloudinary.com/plpnaehl/image/upload/f_auto,q_auto/v1789729686/Websites/Wisdom%20Library%20Gallery/study-cubicles.jpg",
     title: "Study Cubicles",
     subtitle: "Individual Light & Socket",
     span: "col-span-1 row-span-1",
   },
   {
     id: 5,
-    src: "/images/F.jpeg",
+    src: "https://res.cloudinary.com/plpnaehl/image/upload/f_auto,q_auto/v1789729688/Websites/Wisdom%20Library%20Gallery/reception-desk.jpg",
     title: "Reception Desk",
     subtitle: "Always Here to Help",
     span: "col-span-1 row-span-2",
   },
   {
     id: 6,
-    src: "/images/J.jpeg",
+    src: "https://res.cloudinary.com/plpnaehl/image/upload/f_auto,q_auto/v1789729689/Websites/Wisdom%20Library%20Gallery/spacious-seating.jpg",
     title: "Spacious Seating",
     subtitle: "Room to Focus",
     span: "col-span-2 row-span-1",
   },
   {
     id: 7,
-    src: "/images/H.jpeg",
+    src: "https://res.cloudinary.com/plpnaehl/image/upload/f_auto,q_auto/v1789729695/Websites/Wisdom%20Library%20Gallery/comfort-and-focus.jpg",
     title: "Comfort & Focus",
     subtitle: "Fully Air Conditioned",
     span: "col-span-1 row-span-1",
   },
   {
     id: 8,
-    src: "/images/E.jpeg",
+    src: "https://res.cloudinary.com/plpnaehl/image/upload/f_auto,q_auto/v1789729697/Websites/Wisdom%20Library%20Gallery/private-study-booths.jpg",
     title: "Private Study Booths",
     subtitle: "Distraction-Free Corners",
     span: "col-span-1 row-span-1",
@@ -79,12 +81,11 @@ function GalleryCard({ item, index, onOpen }) {
       className={`${item.span} relative overflow-hidden rounded-2xl cursor-pointer group min-h-[160px]`}
       onClick={() => onOpen(item)}
     >
-      <Image
+      <img
         src={item.src}
         alt={item.title}
-        fill
-        sizes="(max-width: 768px) 50vw, 25vw"
-        className="object-cover group-hover:scale-105 transition-transform duration-500"
+        loading="lazy"
+        className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
       />
 
       {/* Overlay on hover */}
@@ -167,12 +168,10 @@ export default function Gallery() {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="relative h-80 bg-primary-100">
-                <Image
+                <img
                   src={selected.src}
                   alt={selected.title}
-                  fill
-                  sizes="(max-width: 672px) 100vw, 672px"
-                  className="object-cover"
+                  className="absolute inset-0 w-full h-full object-cover"
                 />
               </div>
               <div className="bg-white p-6">
