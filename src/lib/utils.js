@@ -38,7 +38,8 @@ export const formatDate = (date, fmt = "dd MMM yyyy") => {
 // date-fns's differenceInDays, which measures raw 24-hour periods and is
 // sensitive to time-of-day — it can undercount by 1 depending on what time
 // "now" is versus the target date's midnight timestamp.
-export const daysUntil = (date) => differenceInCalendarDays(new Date(date), new Date());
+export const daysUntil = (date) =>
+  differenceInCalendarDays(new Date(date), new Date());
 
 export const formatDateTime = (date, fmt = "dd MMM yyyy, hh:mm a") => {
   if (!date) return "—";
@@ -226,11 +227,43 @@ export const getAdmissionWhatsAppUrl = (student) => {
   return `https://wa.me/${num}?text=${encodeURIComponent(msg)}`;
 };
 
+// Seat-confirmation message — lists every assigned batch with its seat
+// number (or "Flexi Batch" for batches with no fixed seat), one per line.
+export const getSeatConfirmationWhatsAppUrl = (student) => {
+  const rawPhone = student.whatsappNumber || student.mobile;
+  const assignments = student.seatAssignments || [];
+  if (!rawPhone || !assignments.length) return null;
+  let num = rawPhone.replace(/\D/g, "");
+  if (num.length === 10) num = "91" + num;
+  else if (num.startsWith("0") && num.length === 11) num = "91" + num.slice(1);
+
+  const batchLines = assignments
+    .map((a) =>
+      a.seatNumber
+        ? `${a.batch} - Seat ${a.seatNumber}`
+        : `${a.batch} - Flexi Batch`,
+    )
+    .join("\n");
+
+  const msg =
+    `Hi ${student.fullName}!\n\n` +
+    `Congratulations! Your seat has been confirmed at *Wisdom Library*.\n\n` +
+    `*Your Batch${assignments.length > 1 ? "es" : ""}:*\n${batchLines}\n\n` +
+    `Wishing you focus and success ahead. Keep studying!\n` +
+    `*Wisdom Library*`;
+
+  return `https://wa.me/${num}?text=${encodeURIComponent(msg)}`;
+};
+
 // WhatsApp-bold ("*Today*", "*Tomorrow*", "*Overdue*", "*3 days*"...) label for
 // how soon a payment is due — surfaces urgency in reminder messages. Beyond 5
 // days it falls back to the plain formatted date (not bold), same threshold
 // getPaymentStatusFromDueDate uses for its "due-soon" status.
-export const formatDueDateForWhatsApp = (dueDate, daysUntilDue, overdue = daysUntilDue < 0) => {
+export const formatDueDateForWhatsApp = (
+  dueDate,
+  daysUntilDue,
+  overdue = daysUntilDue < 0,
+) => {
   if (overdue) return "*Overdue*";
   if (daysUntilDue === 0) return "*Today*";
   if (daysUntilDue === 1) return "*Tomorrow*";
@@ -252,7 +285,10 @@ export const getWhatsAppUrl = (student, nextDueDate, libraryFees) => {
   else if (num.startsWith("0") && num.length === 11) num = "91" + num.slice(1);
 
   const dueDateStr = nextDueDate
-    ? formatDueDateForWhatsApp(nextDueDate, differenceInCalendarDays(new Date(nextDueDate), new Date()))
+    ? formatDueDateForWhatsApp(
+        nextDueDate,
+        differenceInCalendarDays(new Date(nextDueDate), new Date()),
+      )
     : "soon";
   const fee = libraryFees || student.libraryFees || 0;
 
