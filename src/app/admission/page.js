@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react"; // useRef kept for CameraModal
 import { motion, AnimatePresence } from "framer-motion";
+import Link from "next/link";
 import axios from "axios";
 import {
   ChevronDown,
@@ -15,6 +16,8 @@ import {
   Armchair,
   CheckCircle,
   Loader2,
+  Undo2,
+  Send,
 } from "lucide-react";
 
 const API_BASE =
@@ -668,7 +671,9 @@ export default function AdmissionPage() {
             }}
           />
           <h1 className="font-display text-2xl font-bold text-primary">
-            Wisdom Library
+            <Link href="/" className="hover:text-primary/80 transition-colors">
+              Wisdom Library
+            </Link>
           </h1>
           <p className="text-primary-lighter text-sm mt-1">
             Self Admission Portal
@@ -916,9 +921,18 @@ export default function AdmissionPage() {
                       <Loader2 className="w-4 h-4 animate-spin" /> Submitting…
                     </>
                   ) : (
-                    "Submit Admission Request"
+                    <>
+                      <Send className="w-4 h-4" /> Submit Admission Request
+                    </>
                   )}
                 </button>
+
+                <Link
+                  href="/"
+                  className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-primary-200 text-primary text-sm font-medium hover:bg-primary-50 transition-colors"
+                >
+                  <Undo2 className="w-4 h-4" /> Return to Website
+                </Link>
               </form>
             </div>
           </>

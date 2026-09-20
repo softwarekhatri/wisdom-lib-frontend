@@ -13,7 +13,7 @@ const PARTICLES = Array.from({ length: 25 }, (_, i) => ({
   opacity: Math.random() * 0.4 + 0.1,
 }));
 
-const WORDS = ['Knowledge', 'Wisdom', 'Excellence', 'Growth', 'Success'];
+const WORDS = ["Knowledge", "Wisdom", "Excellence", "Growth", "Success"];
 
 function TypeWriter() {
   const [wordIndex, setWordIndex] = useState(0);
@@ -196,19 +196,19 @@ export default function Hero() {
             transition={{ duration: 0.6, delay: 0.7 }}
             className="flex flex-wrap gap-4"
           >
-            <a
-              href="#contact"
+            <Link
+              href="/admission"
               className="btn-gold flex items-center gap-2 text-sm"
             >
               Take Admission <ArrowRight className="w-4 h-4" />
-            </a>
-            <Link
+            </Link>
+            <a
               href="tel:+917209703947"
               className="flex items-center gap-2 px-6 py-3 rounded-xl border border-white/20 text-white text-sm font-medium hover:bg-white/10 transition-all"
             >
               <Phone className="w-4 h-4" />
               Call now
-            </Link>
+            </a>
           </motion.div>
 
           {/* Quick stats */}
